@@ -30,7 +30,7 @@ struct ChatRequest {
 }
 
 /// Общий интерфейс провайдера.
-protocol ChatProvider: class {
+protocol ChatProvider: AnyObject {
     var config: ProviderConfig { get }
 
     /// Запускает стриминг. Возвращает объект для отмены (или nil, если запрос не начался).

@@ -61,7 +61,7 @@ struct ChatError: LocalizedError {
 }
 
 /// Запрос, который можно отменить.
-protocol CancellableTask: class {
+protocol CancellableTask: AnyObject {
     func cancel()
 }
 
@@ -135,7 +135,15 @@ final class StreamingSession: NSObject, URLSessionDataDelegate, CancellableTask 
 
         if let http = response as? HTTPURLResponse {
             statusCode = http.statusCode
-            let contentType = (http.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
+            var contentType = ""
+            for (key, value) in http.allHeaderFields {
+                if let name = key as? String,
+                   name.caseInsensitiveCompare("Content-Type") == .orderedSame,
+                   let text = value as? String {
+                    contentType = text.lowercased()
+                    break
+                }
+            }
             isSSE = contentType.contains("text/event-stream")
         }
         completionHandler(.allow)

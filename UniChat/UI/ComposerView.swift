@@ -1,6 +1,6 @@
 import UIKit
 
-protocol ComposerViewDelegate: class {
+protocol ComposerViewDelegate: AnyObject {
     func composer(_ composer: ComposerView, didSend text: String)
     func composerDidRequestStop(_ composer: ComposerView)
 }

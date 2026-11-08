@@ -7,7 +7,7 @@ final class MessageCell: UITableViewCell {
     private let bubbleView = UIView()
     private let stackView = UIStackView()
     private let headerLabel = UILabel()
-    private let textLabel = UILabel()
+    private let messageLabel = UILabel()
 
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
@@ -42,14 +42,14 @@ final class MessageCell: UITableViewCell {
         headerLabel.lineBreakMode = .byTruncatingTail
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        textLabel.numberOfLines = 0
-        textLabel.lineBreakMode = .byWordWrapping
-        textLabel.translatesAutoresizingMaskIntoConstraints = false
-        textLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        textLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        messageLabel.numberOfLines = 0
+        messageLabel.lineBreakMode = .byWordWrapping
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
 
         stackView.addArrangedSubview(headerLabel)
-        stackView.addArrangedSubview(textLabel)
+        stackView.addArrangedSubview(messageLabel)
 
         leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12)
         trailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12)
@@ -113,13 +113,13 @@ final class MessageCell: UITableViewCell {
         if streaming {
             displayText = displayText.isEmpty ? "▍" : displayText + " ▍"
         }
-        textLabel.attributedText = Markdown.render(displayText, color: textColor)
-        textLabel.accessibilityLabel = displayText
+        messageLabel.attributedText = Markdown.render(displayText, color: textColor)
+        messageLabel.accessibilityLabel = displayText
     }
 
     func updateStreamingText(_ text: String, providerTitle: String?, isError: Bool) {
         let displayText = text.isEmpty ? "▍" : text + " ▍"
-        textLabel.attributedText = Markdown.render(displayText,
+        messageLabel.attributedText = Markdown.render(displayText,
                                                    color: isError ? Theme.danger : Theme.primaryText)
         headerLabel.text = isError ? "Ошибка" : (providerTitle ?? "Ассистент")
         headerLabel.textColor = isError ? Theme.danger : Theme.secondaryText
@@ -129,6 +129,6 @@ final class MessageCell: UITableViewCell {
         super.prepareForReuse()
         headerLabel.isHidden = false
         headerLabel.text = nil
-        textLabel.attributedText = nil
+        messageLabel.attributedText = nil
     }
 }
