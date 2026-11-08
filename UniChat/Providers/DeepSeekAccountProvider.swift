@@ -222,8 +222,7 @@ final class DeepSeekAccountProvider: ChatProvider {
         let stream = StreamingSession()
         task.streamSession = stream
 
-        stream.start(request: request, dispatchDataPerLine: true, onEvent: { [weak self] payload in
-            guard let self = self else { return }
+        stream.start(request: request, dispatchDataPerLine: true, onEvent: { payload in
             if task.isCancelled { return }
 
             state.consume(payload)

@@ -61,20 +61,31 @@ enum WebSupport {
 
     static func clearData(for domains: [String], completion: (() -> Void)? = nil) {
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        var urls: [URL] = []
-        for domain in domains {
-            if let url = URL(string: domain) {
-                urls.append(url)
-            }
-        }
-
         let store = WKWebsiteDataStore.default()
-        if urls.isEmpty {
+
+        guard !domains.isEmpty else {
             store.removeData(ofTypes: types, modifiedSince: Date(timeIntervalSince1970: 0)) {
                 completion?()
             }
-        } else {
-            store.removeData(ofTypes: types, for: urls, modifiedSince: Date(timeIntervalSince1970: 0)) {
+            return
+        }
+
+        let hosts = domains.map { domain -> String in
+            var value = domain.lowercased()
+            if value.hasPrefix("https://") { value = String(value.dropFirst(8)) }
+            if value.hasPrefix("http://") { value = String(value.dropFirst(7)) }
+            while value.hasSuffix("/") { value.removeLast() }
+            return value
+        }
+
+        store.fetchDataRecords(ofTypes: types) { records in
+            let matched = records.filter { record in
+                let name = record.displayName.lowercased()
+                return hosts.contains { host in
+                    return name == host || name.hasSuffix("." + host) || host.hasSuffix("." + name)
+                }
+            }
+            store.removeData(ofTypes: types, for: matched) {
                 completion?()
             }
         }

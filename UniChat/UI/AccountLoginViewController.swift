@@ -142,7 +142,7 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         webView.isOpaque = true
         view.addSubview(webView)
 
-        let topView = view.viewWithTag(500) ?? view
+        let topView: UIView = view.viewWithTag(500) ?? view
 
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: 2),
