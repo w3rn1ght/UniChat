@@ -158,7 +158,7 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         let address: String
         switch provider.kind {
         case .deepSeekAccount:
-            address = "https://chat.deepseek.com/sign_in"
+            address = "https://chat.deepseek.com/"
         case .geminiAccount:
             address = "https://gemini.google.com/app"
         default:

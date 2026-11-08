@@ -736,8 +736,10 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
           var url = 'https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate'
             + '?hl=' + encodeURIComponent(config.language || 'ru')
             + '&_reqid=' + reqid
-            + '&rt=c'
-            + '&f.sid=' + encodeURIComponent(sessionID);
+            + '&rt=c';
+          if (sessionID) {
+            url += '&f.sid=' + encodeURIComponent(sessionID);
+          }
 
           var xhr = new XMLHttpRequest();
           state.xhr = xhr;
