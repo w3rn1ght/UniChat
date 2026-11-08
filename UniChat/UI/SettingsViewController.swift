@@ -69,9 +69,9 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         if section == 0 {
-            return "Ключи хранятся в Keychain на этом устройстве. Запросы идут напрямую к выбранному провайдеру."
+            return "Ключи и токены аккаунтов хранятся только на этом устройстве. Вход в DeepSeek и Gemini выполняется на настоящих сайтах провайдеров."
         }
-        return "UniChat 1.0 · iOS 12+ · без аналитики и без собственного сервера."
+        return "UniChat 1.1 · iOS 12+ · без аналитики и без собственного сервера."
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -91,18 +91,24 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
                 cell.textLabel?.text = provider.name
                 cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
 
-                var detail = "\(provider.kind.shortTitle) · \(provider.model)"
-                if provider.trimmedAPIKey.isEmpty {
-                    detail += "  ·  нет ключа"
+                if provider.kind.isAccount {
+                    cell.detailTextLabel?.text = provider.accountStatusText
+                    cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
+                    cell.detailTextLabel?.textColor = provider.isReady ? Theme.accent : Theme.danger
+                } else {
+                    var detail = "\(provider.kind.shortTitle) · \(provider.model)"
+                    if provider.trimmedAPIKey.isEmpty {
+                        detail += "  ·  нет ключа"
+                    }
+                    cell.detailTextLabel?.text = detail
+                    cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
+                    cell.detailTextLabel?.textColor = provider.trimmedAPIKey.isEmpty ? Theme.danger : Theme.secondaryText
                 }
-                cell.detailTextLabel?.text = detail
-                cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-                cell.detailTextLabel?.textColor = provider.trimmedAPIKey.isEmpty ? Theme.danger : Theme.secondaryText
             } else {
                 cell.textLabel?.text = "Добавить провайдера"
                 cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
                 cell.textLabel?.textColor = Theme.accent
-                cell.detailTextLabel?.text = "OpenAI-совместимый или Gemini"
+                cell.detailTextLabel?.text = "API-ключ или вход в аккаунт"
                 cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
                 cell.accessoryType = .none
                 cell.backgroundColor = Theme.card
@@ -154,6 +160,28 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
     private func showAddProviderMenu(sourceView: UIView?) {
         let alert = UIAlertController(title: "Тип провайдера", message: nil, preferredStyle: .actionSheet)
 
+        alert.addAction(UIAlertAction(title: "DeepSeek — вход в аккаунт", style: .default) { _ in
+            let provider = ProviderConfig(
+                name: "DeepSeek (аккаунт)",
+                kind: .deepSeekAccount,
+                baseURL: "https://chat.deepseek.com",
+                model: "deepseek-chat",
+                modelPresets: ["deepseek-chat", "deepseek-reasoner"]
+            )
+            self.openEditor(with: provider)
+        })
+
+        alert.addAction(UIAlertAction(title: "Gemini — вход в аккаунт", style: .default) { _ in
+            let provider = ProviderConfig(
+                name: "Gemini (аккаунт)",
+                kind: .geminiAccount,
+                baseURL: "https://gemini.google.com",
+                model: "gemini-flash",
+                modelPresets: ["gemini-flash", "gemini-pro", "gemini-flash-lite", "auto"]
+            )
+            self.openEditor(with: provider)
+        })
+
         alert.addAction(UIAlertAction(title: "OpenAI-совместимый", style: .default) { _ in
             let provider = ProviderConfig(
                 name: "Свой API",
@@ -165,7 +193,7 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
             self.openEditor(with: provider)
         })
 
-        alert.addAction(UIAlertAction(title: "Google Gemini", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Google Gemini — API-ключ", style: .default) { _ in
             let provider = ProviderConfig(
                 name: "Gemini (свой)",
                 kind: .gemini,

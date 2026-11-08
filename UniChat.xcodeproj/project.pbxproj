@@ -27,6 +27,13 @@
 		A1B2C3D4E5F6000000000212 /* ProviderEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */; };
 		A1B2C3D4E5F6000000000213 /* InfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000113 /* InfoViewController.swift */; };
 		A1B2C3D4E5F6000000000214 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */; };
+		A1B2C3D4E5F6000000000216 /* WebSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000116 /* WebSupport.swift */; };
+		A1B2C3D4E5F6000000000217 /* DeepSeekPoW.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000117 /* DeepSeekPoW.swift */; };
+		A1B2C3D4E5F6000000000218 /* DeepSeekAccountProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000118 /* DeepSeekAccountProvider.swift */; };
+		A1B2C3D4E5F6000000000219 /* GeminiWebSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000119 /* GeminiWebSession.swift */; };
+		A1B2C3D4E5F600000000021A /* GeminiAccountProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011A /* GeminiAccountProvider.swift */; };
+		A1B2C3D4E5F600000000021B /* AccountLoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */; };
+		A1B2C3D4E5F600000000021C /* deepseek_pow.wasm in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +59,13 @@
 		A1B2C3D4E5F6000000000113 /* InfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoViewController.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000115 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000116 /* WebSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSupport.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000117 /* DeepSeekPoW.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekPoW.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000118 /* DeepSeekAccountProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekAccountProvider.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000119 /* GeminiWebSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiWebSession.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011A /* GeminiAccountProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiAccountProvider.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountLoginViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */ = {isa = PBXFileReference; lastKnownFileType = file; path = deepseek_pow.wasm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +118,7 @@
 				A1B2C3D4E5F6000000000106 /* HTTP.swift */,
 				A1B2C3D4E5F6000000000107 /* Markdown.swift */,
 				A1B2C3D4E5F6000000000108 /* Theme.swift */,
+				A1B2C3D4E5F6000000000116 /* WebSupport.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -115,6 +130,10 @@
 				A1B2C3D4E5F600000000010A /* OpenAICompatibleProvider.swift */,
 				A1B2C3D4E5F600000000010B /* GeminiProvider.swift */,
 				A1B2C3D4E5F600000000010C /* ProviderFactory.swift */,
+				A1B2C3D4E5F6000000000117 /* DeepSeekPoW.swift */,
+				A1B2C3D4E5F6000000000118 /* DeepSeekAccountProvider.swift */,
+				A1B2C3D4E5F6000000000119 /* GeminiWebSession.swift */,
+				A1B2C3D4E5F600000000011A /* GeminiAccountProvider.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
@@ -129,6 +148,7 @@
 				A1B2C3D4E5F6000000000111 /* SettingsViewController.swift */,
 				A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */,
 				A1B2C3D4E5F6000000000113 /* InfoViewController.swift */,
+				A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -137,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */,
+				A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -201,6 +222,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B2C3D4E5F6000000000214 /* LaunchScreen.storyboard in Resources */,
+				A1B2C3D4E5F600000000021C /* deepseek_pow.wasm in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +252,12 @@
 				A1B2C3D4E5F6000000000211 /* SettingsViewController.swift in Sources */,
 				A1B2C3D4E5F6000000000212 /* ProviderEditorViewController.swift in Sources */,
 				A1B2C3D4E5F6000000000213 /* InfoViewController.swift in Sources */,
+				A1B2C3D4E5F6000000000216 /* WebSupport.swift in Sources */,
+				A1B2C3D4E5F6000000000217 /* DeepSeekPoW.swift in Sources */,
+				A1B2C3D4E5F6000000000218 /* DeepSeekAccountProvider.swift in Sources */,
+				A1B2C3D4E5F6000000000219 /* GeminiWebSession.swift in Sources */,
+				A1B2C3D4E5F600000000021A /* GeminiAccountProvider.swift in Sources */,
+				A1B2C3D4E5F600000000021B /* AccountLoginViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,14 +330,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -321,14 +349,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

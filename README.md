@@ -1,16 +1,18 @@
 # UniChat — ИИ-клиент для iOS 12+
 
-Нативный клиент чата с ИИ на UIKit. Поддерживает OpenAI-совместимые API
-(OpenRouter, AnyModel, DeepSeek, свои шлюзы) и Google Gemini.
+Нативный клиент чата с ИИ на UIKit. Работает с DeepSeek и Gemini через
+обычный вход в аккаунт, а также с OpenAI-совместимыми API
+(OpenRouter, AnyModel, DeepSeek, свои шлюзы) и Gemini API по ключу.
 Работает на iOS 12.0 и новее, без сторонних зависимостей.
 
 ## Возможности
 
+- Два режима доступа: вход в аккаунт DeepSeek/Gemini или API-ключ.
 - Стриминг ответов (SSE) и отмена запроса.
 - Несколько провайдеров, переключение на лету, выбор модели.
 - Markdown в ответах: жирный, курсив, код, ссылки, списки, заголовки.
 - История чатов сохраняется локально (Application Support).
-- API-ключи — в Keychain, а не в UserDefaults.
+- API-ключи и токены — в Keychain; cookie аккаунтов — в хранилище WebKit.
 - Свой Base URL и дополнительные заголовки для любого провайдера.
 - Проверка подключения прямо в настройках.
 - Тёмная тема не поддерживается осознанно: iOS 12 её не имеет, интерфейс светлый.
@@ -66,48 +68,60 @@ Keychain: если iOS отклонит Keychain для неподписанно
 
 ## Провайдеры из коробки
 
-| Провайдер | Base URL | Ключ |
+| Провайдер | Доступ | Base URL |
 |---|---|---|
-| OpenRouter | `https://openrouter.ai/api/v1` | openrouter.ai → Keys |
-| AnyModel | `https://anymodel.org/v1` | anymodel.org → кабинет |
-| DeepSeek | `https://api.deepseek.com/v1` | platform.deepseek.com |
-| Gemini | `https://generativelanguage.googleapis.com` | aistudio.google.com/apikey |
-| Gemini через релей | адрес вашего Worker | тот же ключ Google |
+| DeepSeek (аккаунт) | вход на chat.deepseek.com | `https://chat.deepseek.com` |
+| Gemini (аккаунт) | вход в Google на gemini.google.com | `https://gemini.google.com` |
+| OpenRouter | API-ключ openrouter.ai → Keys | `https://openrouter.ai/api/v1` |
+| AnyModel | API-ключ anymodel.org → кабинет | `https://anymodel.org/v1` |
+| DeepSeek API | API-ключ platform.deepseek.com | `https://api.deepseek.com/v1` |
+| Gemini API | API-ключ aistudio.google.com/apikey | `https://generativelanguage.googleapis.com` |
+| Gemini через релей | тот же ключ Google | адрес вашего Worker |
 
 Названия моделей у провайдеров меняются. Если модель не найдена —
 введите её вручную: «Провайдер и модель» → «Своя модель…».
 
+## Вход в аккаунт DeepSeek и Gemini
+
+Пароль вводится только на настоящем сайте провайдера внутри встроенного
+браузера. Приложение не видит и не хранит его.
+
+- **DeepSeek.** После входа UniChat забирает токен сессии из `localStorage`
+  и обращается к тем же endpoint'ам, что и сайт: создание чата, proof-of-work
+  (`DeepSeekHashV1`, официальный WASM-модуль) и streaming completion.
+- **Gemini.** Запрос `StreamGenerate` выполняется XHR-ом внутри залогиненного
+  WKWebView на домене `gemini.google.com`. Cookie, включая HttpOnly, отправляет
+  сам WebKit, поэтому не нужен ручной разбор сессии Google.
+- **Сброс.** На экране входа кнопка «Сброс» удаляет cookie сайта и сохранённый
+  токен.
+- **Google и встроенный браузер.** Google иногда блокирует вход в WKWebView
+  («browser may not be secure»). В этом случае используйте Gemini API по ключу
+  или релей.
+
+Это неофициальный клиент к веб-версиям. Используйте на свой риск и соблюдайте
+условия провайдера.
+
 ### Бесплатный доступ
 
-- **Gemini** — бесплатный тариф в Google AI Studio (лимиты по запросам).
+- **DeepSeek (аккаунт)** — бесплатный веб-чат DeepSeek.
+- **Gemini (аккаунт)** — бесплатный тариф обычного аккаунта Google.
+- **Gemini API** — бесплатный тариф в Google AI Studio (лимиты по запросам).
 - **OpenRouter** — модели с суффиксом `:free`.
-- **DeepSeek** — API платный, но дешёвый; при регистрации бывают бонусные кредиты.
+- **DeepSeek API** — платный, но дешёвый; при регистрации бывают бонусные кредиты.
 - **AnyModel** — оплата по токенам, один ключ на GPT/Claude/Gemini/DeepSeek.
-
-### Про «вход в обычный аккаунт»
-
-Приложение **не** логинится в веб-версии DeepSeek/Gemini по логину и паролю
-и не использует неофициальные внутренние API. Причины:
-
-- это нарушает условия использования сервисов и ведёт к блокировке аккаунтов;
-- внутренние эндпоинты меняются без предупреждения и требуют
-  динамических токенов/подписей (proof-of-work у DeepSeek, `batchexecute`
-  у Gemini), поэтому такой клиент ломается через недели;
-- хранение cookie/токенов аккаунта на устройстве — риск утечки.
-
-Вместо этого используются официальные API-ключи с бесплатными лимитами
-(Gemini AI Studio, free-модели OpenRouter). Это стабильно и легально.
 
 ### Gemini в РФ
 
-Прямой домен Google может быть недоступен. Два варианта:
+Прямой домен Google может быть недоступен. Варианты:
 
-1. **Свой релей.** Разверните `Relay/gemini-relay.js` как Cloudflare Worker
-   (инструкция внутри файла), затем укажите его адрес в Base URL провайдера
-   Gemini. Ключ остаётся ключом Google, релей не хранит данные.
+1. **Вход в аккаунт Gemini.** Если `gemini.google.com` открывается на
+   устройстве, используйте провайдера «Gemini (аккаунт)».
+2. **Свой релей (для API-ключа).** Разверните `Relay/gemini-relay.js` как
+   Cloudflare Worker (инструкция внутри файла), затем укажите его адрес в Base
+   URL провайдера Gemini. Ключ остаётся ключом Google, релей не хранит данные.
    Для дополнительной защиты задайте `RELAY_SECRET` и добавьте заголовок
    `x-relay-secret` в «Доп. заголовки».
-2. **Через OpenRouter/AnyModel** — у них есть модели Gemini, доступные
+3. **Через OpenRouter/AnyModel** — у них есть модели Gemini, доступные
    без прямого подключения к Google.
 
 Учитывайте, что доступ из неподдерживаемых регионов может нарушать условия
@@ -125,16 +139,23 @@ UniChat/
     ├── Core/
     │   ├── Models.swift          # ChatMessage, Conversation
     │   ├── Store.swift           # JSON-хранилище чатов
-    │   ├── Keychain.swift        # API-ключи
+    │   ├── Keychain.swift        # API-ключи и токены аккаунтов
     │   ├── Settings.swift        # ProviderConfig, AppSettings
     │   ├── HTTP.swift            # SSE-парсер, ошибки
     │   ├── Markdown.swift        # Markdown → NSAttributedString
+    │   ├── WebSupport.swift      # общий WKWebView, Safari UA, cookie
     │   └── Theme.swift           # цвета, шрифты, форматирование
     ├── Providers/
     │   ├── ChatProvider.swift    # протокол + тест подключения
     │   ├── OpenAICompatibleProvider.swift
     │   ├── GeminiProvider.swift
+    │   ├── DeepSeekPoW.swift     # DeepSeekHashV1 на WASM
+    │   ├── DeepSeekAccountProvider.swift
+    │   ├── GeminiWebSession.swift
+    │   ├── GeminiAccountProvider.swift
     │   └── ProviderFactory.swift
+    ├── Resources/
+    │   └── deepseek_pow.wasm     # официальный PoW-модуль DeepSeek
     └── UI/
         ├── ConversationsViewController.swift
         ├── ChatViewController.swift
@@ -142,6 +163,7 @@ UniChat/
         ├── ComposerView.swift
         ├── SettingsViewController.swift
         ├── ProviderEditorViewController.swift
+        ├── AccountLoginViewController.swift
         └── InfoViewController.swift
 ```
 
@@ -158,6 +180,7 @@ UniChat/
 - UIKit only: без SwiftUI, Combine и async/await.
 - Без SF Symbols (появились в iOS 13) — текстовые иконки.
 - Стриминг через `URLSessionDataDelegate`, а не `URLSessionWebSocketTask`.
+- Аккаунты — через `WKWebView`; cookie хранит `WKWebsiteDataStore`.
 - `NSAllowsArbitraryLoads = true` — чтобы можно было подключать локальные
   шлюзы по HTTP. Для App Store это стоит заменить на исключения по доменам.
 
@@ -167,5 +190,8 @@ UniChat/
   перед публикацией в App Store.
 - Нет синхронизации между устройствами.
 - Один системный промпт на провайдера; отдельного промпта на чат нет.
-- Reasoning-контент DeepSeek (`reasoning_content`) не показывается,
-  выводится только финальный ответ.
+- Reasoning-контент DeepSeek показывается блоком «Размышления» в режиме
+  аккаунта; в API-режиме выводится только финальный ответ.
+- Google может блокировать вход во встроенном браузере; это ограничение
+  Google, а не приложения.
+

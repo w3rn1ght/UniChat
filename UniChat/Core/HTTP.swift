@@ -81,13 +81,16 @@ final class StreamingSession: NSObject, URLSessionDataDelegate, CancellableTask 
     private var isSSE = false
     private var statusCode = 0
     private var finished = false
+    private var dispatchDataPerLine = false
 
     func start(request: URLRequest,
+               dispatchDataPerLine: Bool = false,
                onEvent: @escaping (String) -> Void,
                onFinish: @escaping (Error?) -> Void) {
 
         self.onEvent = onEvent
         self.onFinish = onFinish
+        self.dispatchDataPerLine = dispatchDataPerLine
 
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 120
@@ -235,6 +238,9 @@ final class StreamingSession: NSObject, URLSessionDataDelegate, CancellableTask 
             var value = String(line.dropFirst(5))
             if value.hasPrefix(" ") { value.removeFirst() }
             eventLines.append(value)
+            if dispatchDataPerLine {
+                dispatchEvent()
+            }
             return
         }
         // event:, id:, retry: — игнорируем

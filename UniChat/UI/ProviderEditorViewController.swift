@@ -63,6 +63,11 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         ])
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if isMovingFromParent {
@@ -80,7 +85,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
-        case 0: return 5
+        case 0: return draft.kind.isAccount ? 4 : 5
         case 1: return 2
         default: return isNew ? 1 : 2
         }
@@ -119,7 +124,24 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                 return cell
             case 1:
                 return makeTypeCell()
-            case 2:
+            default:
+                break
+            }
+
+            if draft.kind.isAccount {
+                if indexPath.row == 2 {
+                    let cell = makeTextFieldCell(title: "Модель",
+                                                 text: draft.model,
+                                                 placeholder: "gemini-flash",
+                                                 tag: textFieldTagModel,
+                                                 secure: false)
+                    modelField = cell.contentView.viewWithTag(textFieldTagModel) as? UITextField
+                    return cell
+                }
+                return makeAccountCell()
+            }
+
+            if indexPath.row == 2 {
                 let cell = makeTextFieldCell(title: "Base URL",
                                              text: draft.baseURL,
                                              placeholder: "https://…",
@@ -127,7 +149,9 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                                              secure: false)
                 baseField = cell.contentView.viewWithTag(textFieldTagBase) as? UITextField
                 return cell
-            case 3:
+            }
+
+            if indexPath.row == 3 {
                 let cell = makeTextFieldCell(title: "Модель",
                                              text: draft.model,
                                              placeholder: "gemini-2.5-flash",
@@ -135,16 +159,16 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                                              secure: false)
                 modelField = cell.contentView.viewWithTag(textFieldTagModel) as? UITextField
                 return cell
-            default:
-                let placeholder = draft.hasAPIKey ? "Ключ сохранён — введите новый" : "Вставьте API-ключ"
-                let cell = makeTextFieldCell(title: "API-ключ",
-                                             text: pendingKey,
-                                             placeholder: placeholder,
-                                             tag: textFieldTagKey,
-                                             secure: true)
-                keyField = cell.contentView.viewWithTag(textFieldTagKey) as? UITextField
-                return cell
             }
+
+            let placeholder = draft.hasAPIKey ? "Ключ сохранён — введите новый" : "Вставьте API-ключ"
+            let cell = makeTextFieldCell(title: "API-ключ",
+                                         text: pendingKey,
+                                         placeholder: placeholder,
+                                         tag: textFieldTagKey,
+                                         secure: true)
+            keyField = cell.contentView.viewWithTag(textFieldTagKey) as? UITextField
+            return cell
         }
 
         if indexPath.section == 1 {
@@ -239,9 +263,24 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         cell.textLabel?.text = "Тип"
         cell.textLabel?.font = UIFont.systemFont(ofSize: 14)
         cell.textLabel?.textColor = Theme.secondaryText
-        cell.detailTextLabel?.text = draft.kind.title
+        cell.detailTextLabel?.text = draft.kind.shortTitle
         cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15)
         cell.detailTextLabel?.textColor = Theme.primaryText
+        cell.accessoryType = .disclosureIndicator
+        return cell
+    }
+
+    private func makeAccountCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.backgroundColor = Theme.card
+        cell.textLabel?.text = "Аккаунт"
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 14)
+        cell.textLabel?.textColor = Theme.secondaryText
+
+        let connected = draft.isReady
+        cell.detailTextLabel?.text = draft.accountStatusText
+        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15)
+        cell.detailTextLabel?.textColor = connected ? Theme.accent : Theme.danger
         cell.accessoryType = .disclosureIndicator
         return cell
     }
@@ -314,11 +353,17 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
-        if indexPath.section == 0 && indexPath.row == 1 {
-            view.endEditing(true)
-            applyFields()
-            showTypeMenu(sourceView: tableView.cellForRow(at: indexPath))
-            return
+        if indexPath.section == 0 {
+            if indexPath.row == 1 {
+                view.endEditing(true)
+                applyFields()
+                showTypeMenu(sourceView: tableView.cellForRow(at: indexPath))
+                return
+            }
+            if draft.kind.isAccount && indexPath.row == 3 {
+                openAccountLogin()
+                return
+            }
         }
 
         if indexPath.section == 2 {
@@ -331,9 +376,23 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         }
     }
 
+    private func openAccountLogin() {
+        view.endEditing(true)
+        applyFields()
+        AppSettings.shared.upsert(draft)
+
+        let controller = AccountLoginViewController(provider: draft) { [weak self] updated in
+            guard let self = self else { return }
+            self.draft = updated
+            self.tableView.reloadData()
+        }
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
     private func showTypeMenu(sourceView: UIView?) {
         let alert = UIAlertController(title: "Тип провайдера", message: nil, preferredStyle: .actionSheet)
-        for kind in [ProviderKind.openAICompatible, ProviderKind.gemini] {
+        let kinds: [ProviderKind] = [.deepSeekAccount, .geminiAccount, .openAICompatible, .gemini]
+        for kind in kinds {
             let mark = draft.kind == kind ? "✓ " : ""
             alert.addAction(UIAlertAction(title: mark + kind.title, style: .default) { _ in
                 self.changeKind(to: kind)
@@ -347,25 +406,40 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     private func changeKind(to kind: ProviderKind) {
         guard kind != draft.kind else { return }
-        let wasGemini = draft.kind == .gemini
         draft.kind = kind
+        baseField = nil
+        keyField = nil
 
-        let googleURL = "https://generativelanguage.googleapis.com"
-        if kind == .gemini {
-            if draft.baseURL.isEmpty || !wasGemini {
-                draft.baseURL = googleURL
+        switch kind {
+        case .deepSeekAccount:
+            draft.baseURL = "https://chat.deepseek.com"
+            draft.modelPresets = ["deepseek-chat", "deepseek-reasoner"]
+            if draft.model.isEmpty || !draft.modelPresets.contains(draft.model) {
+                draft.model = "deepseek-chat"
             }
-            if draft.modelPresets.isEmpty {
+            draft.accountConnected = !draft.trimmedAccountToken.isEmpty
+
+        case .geminiAccount:
+            draft.baseURL = "https://gemini.google.com"
+            draft.modelPresets = ["gemini-flash", "gemini-pro", "gemini-flash-lite", "auto"]
+            if draft.model.isEmpty || !draft.modelPresets.contains(draft.model) {
+                draft.model = "gemini-flash"
+            }
+
+        case .gemini:
+            draft.baseURL = "https://generativelanguage.googleapis.com"
+            if draft.modelPresets.isEmpty || draft.modelPresets.contains("gemini-flash") {
                 draft.modelPresets = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
             }
-            if draft.model.isEmpty {
+            if draft.model.isEmpty || draft.model == "gemini-flash" {
                 draft.model = "gemini-2.5-flash"
             }
-        } else {
-            if draft.baseURL.isEmpty || wasGemini {
+
+        case .openAICompatible:
+            if draft.baseURL == "https://chat.deepseek.com" || draft.baseURL == "https://gemini.google.com" {
                 draft.baseURL = "https://api.openai.com/v1"
             }
-            if draft.model.isEmpty {
+            if draft.model.isEmpty || draft.model == "deepseek-chat" || draft.model == "gemini-flash" {
                 draft.model = "gpt-4o-mini"
             }
         }
@@ -375,11 +449,15 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     private func applyFields() {
         if let nameField = nameField { draft.name = nameField.text ?? draft.name }
-        if let baseField = baseField { draft.baseURL = baseField.text ?? draft.baseURL }
         if let modelField = modelField { draft.model = modelField.text ?? draft.model }
-        if let keyField = keyField {
-            pendingKey = keyField.text ?? pendingKey
+
+        if draft.kind.isAccount {
+            pendingKey = ""
+        } else {
+            if let baseField = baseField { draft.baseURL = baseField.text ?? draft.baseURL }
+            if let keyField = keyField { pendingKey = keyField.text ?? pendingKey }
         }
+
         if let systemTextView = systemTextView { draft.systemPrompt = systemTextView.text }
         if let headersTextView = headersTextView {
             draft.extraHeaders = ProviderEditorViewController.parseHeaders(headersTextView.text)
@@ -389,7 +467,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         draft.baseURL = draft.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         draft.model = draft.model.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if !pendingKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if !draft.kind.isAccount && !pendingKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             draft.apiKey = pendingKey.trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
@@ -423,23 +501,37 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     private func runTest() {
         applyFields()
-        guard !draft.baseURL.isEmpty else {
-            showAlert(title: "Нужен Base URL", message: "Введите адрес API.")
-            return
-        }
-        guard draft.hasAPIKey else {
-            showAlert(title: "Нужен ключ", message: "Вставьте API-ключ, чтобы проверить подключение.")
-            return
+
+        if draft.kind.isAccount {
+            guard draft.isReady else {
+                showAlert(title: "Нужен вход",
+                          message: "Сначала войдите в аккаунт: нажмите строку «Аккаунт».")
+                return
+            }
+        } else {
+            guard !draft.baseURL.isEmpty else {
+                showAlert(title: "Нужен Base URL", message: "Введите адрес API.")
+                return
+            }
+            guard draft.hasAPIKey else {
+                showAlert(title: "Нужен ключ", message: "Вставьте API-ключ, чтобы проверить подключение.")
+                return
+            }
         }
 
         isTesting = true
         tableView.reloadSections(IndexSet(integer: 2), with: .none)
 
+        AppSettings.shared.upsert(draft)
         let provider = ProviderFactory.make(for: draft)
         provider.testConnection { [weak self] result in
             guard let self = self else { return }
             self.isTesting = false
-            self.tableView.reloadSections(IndexSet(integer: 2), with: .none)
+
+            if let latest = AppSettings.shared.provider(id: self.draft.id) {
+                self.draft = latest
+            }
+            self.tableView.reloadData()
 
             switch result {
             case .success(let message):

@@ -42,6 +42,37 @@ protocol ChatProvider: AnyObject {
     func testConnection(completion: @escaping (Result<String, Error>) -> Void)
 }
 
+/// Собирает историю диалога в один текстовый промпт для веб-аккаунтов,
+/// у которых нет отдельного массива messages.
+enum AccountPrompt {
+
+    static func build(_ chat: ChatRequest) -> String {
+        var parts: [String] = []
+
+        let system = chat.resolvedSystemPrompt
+        if !system.isEmpty {
+            parts.append("[System]\n" + system)
+        }
+
+        for message in chat.usableMessages {
+            switch message.role {
+            case .user:
+                parts.append("[User]\n" + message.text)
+            case .assistant:
+                parts.append("[Assistant]\n" + message.text)
+            case .system:
+                break
+            }
+        }
+
+        guard !parts.isEmpty else { return "" }
+
+        parts.append("[Assistant]")
+        return "Below is a conversation. Write only the next [Assistant] message.\n\n"
+            + parts.joined(separator: "\n\n")
+    }
+}
+
 /// Вспомогательные сетевые вызовы для проверки подключения.
 enum ConnectionTester {
 

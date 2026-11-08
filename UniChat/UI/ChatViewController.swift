@@ -250,8 +250,8 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
             presentSimpleAlert(title: "Нет провайдера", message: "Добавьте провайдера в настройках.")
             return
         }
-        guard provider.hasAPIKey else {
-            presentMissingKeyAlert(provider: provider)
+        guard provider.isReady else {
+            presentNotReadyAlert(provider: provider)
             return
         }
 
@@ -320,7 +320,11 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
     }
 
     private func append(delta: String) {
-        streamingText += delta
+        if delta.hasPrefix("\u{0}") {
+            streamingText = String(delta.dropFirst())
+        } else {
+            streamingText += delta
+        }
 
         guard let id = streamingMessageID,
               let index = conversation.messages.firstIndex(where: { $0.id == id }) else { return }
@@ -502,8 +506,8 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         ConversationStore.shared.update(conversation)
         updateContextBar()
 
-        if !provider.hasAPIKey {
-            presentMissingKeyAlert(provider: provider)
+        if !provider.isReady {
+            presentNotReadyAlert(provider: provider)
         }
     }
 
@@ -595,8 +599,8 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
     private func regenerateLast() {
         guard !isStreaming, let provider = currentProvider else { return }
-        guard provider.hasAPIKey else {
-            presentMissingKeyAlert(provider: provider)
+        guard provider.isReady else {
+            presentNotReadyAlert(provider: provider)
             return
         }
         guard conversation.messages.contains(where: { $0.role == .user }) else { return }
@@ -642,7 +646,22 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         present(alert, animated: true, completion: nil)
     }
 
-    private func presentMissingKeyAlert(provider: ProviderConfig) {
+    private func presentNotReadyAlert(provider: ProviderConfig) {
+        if provider.kind.isAccount {
+            let message = "Для «\(provider.name)» нужно войти в аккаунт.\n\nВход выполняется на настоящем сайте провайдера: приложение не видит пароль."
+            let alert = UIAlertController(title: "Нужен вход", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Позже", style: .cancel, handler: nil))
+            alert.addAction(UIAlertAction(title: "Войти", style: .default) { _ in
+                AppSettings.shared.upsert(provider)
+                let controller = AccountLoginViewController(provider: provider) { [weak self] _ in
+                    self?.updateContextBar()
+                }
+                self.navigationController?.pushViewController(controller, animated: true)
+            })
+            present(alert, animated: true, completion: nil)
+            return
+        }
+
         let message = "Для «\(provider.name)» не задан API-ключ.\n\nGemini: бесплатный ключ в Google AI Studio.\nDeepSeek, OpenRouter, AnyModel: ключ в личном кабинете.\n\nКлюч хранится только в Keychain на этом устройстве."
         let alert = UIAlertController(title: "Нужен API-ключ", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Позже", style: .cancel, handler: nil))

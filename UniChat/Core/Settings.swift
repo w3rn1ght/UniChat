@@ -3,11 +3,15 @@ import Foundation
 enum ProviderKind: String, Codable {
     case openAICompatible
     case gemini
+    case deepSeekAccount
+    case geminiAccount
 
     var title: String {
         switch self {
         case .openAICompatible: return "OpenAI-совместимый"
-        case .gemini: return "Google Gemini"
+        case .gemini: return "Google Gemini (API-ключ)"
+        case .deepSeekAccount: return "DeepSeek (вход в аккаунт)"
+        case .geminiAccount: return "Gemini (вход в аккаунт)"
         }
     }
 
@@ -15,11 +19,17 @@ enum ProviderKind: String, Codable {
         switch self {
         case .openAICompatible: return "OpenAI API"
         case .gemini: return "Gemini API"
+        case .deepSeekAccount: return "DeepSeek аккаунт"
+        case .geminiAccount: return "Gemini аккаунт"
         }
+    }
+
+    var isAccount: Bool {
+        return self == .deepSeekAccount || self == .geminiAccount
     }
 }
 
-/// Настройки одного провайдера. API-ключ лежит в Keychain.
+/// Настройки одного провайдера. API-ключ и токен аккаунта лежат в Keychain.
 struct ProviderConfig: Codable, Equatable {
     var id: UUID
     var name: String
@@ -29,6 +39,8 @@ struct ProviderConfig: Codable, Equatable {
     var modelPresets: [String]
     var extraHeaders: [String: String]
     var systemPrompt: String
+    var accountConnected: Bool
+    var accountEmail: String
 
     init(id: UUID = UUID(),
          name: String,
@@ -37,7 +49,9 @@ struct ProviderConfig: Codable, Equatable {
          model: String,
          modelPresets: [String] = [],
          extraHeaders: [String: String] = [:],
-         systemPrompt: String = "") {
+         systemPrompt: String = "",
+         accountConnected: Bool = false,
+         accountEmail: String = "") {
         self.id = id
         self.name = name
         self.kind = kind
@@ -46,10 +60,13 @@ struct ProviderConfig: Codable, Equatable {
         self.modelPresets = modelPresets
         self.extraHeaders = extraHeaders
         self.systemPrompt = systemPrompt
+        self.accountConnected = accountConnected
+        self.accountEmail = accountEmail
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, baseURL, model, modelPresets, extraHeaders, systemPrompt
+        case id, name, kind, baseURL, model, modelPresets, extraHeaders, systemPrompt,
+             accountConnected, accountEmail
     }
 
     init(from decoder: Decoder) throws {
@@ -62,10 +79,16 @@ struct ProviderConfig: Codable, Equatable {
         modelPresets = try container.decodeIfPresent([String].self, forKey: .modelPresets) ?? []
         extraHeaders = try container.decodeIfPresent([String: String].self, forKey: .extraHeaders) ?? [:]
         systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? ""
+        accountConnected = try container.decodeIfPresent(Bool.self, forKey: .accountConnected) ?? false
+        accountEmail = try container.decodeIfPresent(String.self, forKey: .accountEmail) ?? ""
     }
 
     var keychainAccount: String {
         return "provider." + id.uuidString
+    }
+
+    var accountTokenKeychainAccount: String {
+        return "account." + id.uuidString
     }
 
     var apiKey: String {
@@ -79,8 +102,23 @@ struct ProviderConfig: Codable, Equatable {
         }
     }
 
+    var accountToken: String {
+        get { return Keychain.get(account: accountTokenKeychainAccount) ?? "" }
+        set {
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Keychain.delete(account: accountTokenKeychainAccount)
+            } else {
+                Keychain.set(newValue, account: accountTokenKeychainAccount)
+            }
+        }
+    }
+
     var trimmedAPIKey: String {
         return apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var trimmedAccountToken: String {
+        return accountToken.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var normalizedBaseURL: String {
@@ -91,6 +129,34 @@ struct ProviderConfig: Codable, Equatable {
 
     var hasAPIKey: Bool {
         return !trimmedAPIKey.isEmpty
+    }
+
+    /// Готов ли провайдер к запросу: ключ для API или активная сессия аккаунта.
+    var isReady: Bool {
+        switch kind {
+        case .deepSeekAccount:
+            return !trimmedAccountToken.isEmpty
+        case .geminiAccount:
+            return accountConnected
+        default:
+            return hasAPIKey
+        }
+    }
+
+    var accountStatusText: String {
+        if kind == .deepSeekAccount {
+            if !trimmedAccountToken.isEmpty {
+                return accountEmail.isEmpty ? "Аккаунт подключён" : accountEmail
+            }
+            return "Войти в аккаунт"
+        }
+        if kind == .geminiAccount {
+            if accountConnected {
+                return accountEmail.isEmpty ? "Аккаунт подключён" : accountEmail
+            }
+            return "Войти в аккаунт"
+        }
+        return hasAPIKey ? "Ключ сохранён" : "Нет API-ключа"
     }
 }
 
@@ -117,7 +183,38 @@ final class AppSettings {
         if providers.isEmpty {
             providers = AppSettings.makeDefaultProviders()
             persist()
+            return
         }
+        migrateProviderList()
+    }
+
+    /// Добавляет новые режимы аккаунтов в уже существующий список провайдеров.
+    private func migrateProviderList() {
+        var changed = false
+
+        if !providers.contains(where: { $0.kind == .deepSeekAccount }) {
+            providers.append(ProviderConfig(
+                name: "DeepSeek (аккаунт)",
+                kind: .deepSeekAccount,
+                baseURL: "https://chat.deepseek.com",
+                model: "deepseek-chat",
+                modelPresets: ["deepseek-chat", "deepseek-reasoner"]
+            ))
+            changed = true
+        }
+
+        if !providers.contains(where: { $0.kind == .geminiAccount }) {
+            providers.append(ProviderConfig(
+                name: "Gemini (аккаунт)",
+                kind: .geminiAccount,
+                baseURL: "https://gemini.google.com",
+                model: "gemini-flash",
+                modelPresets: ["gemini-flash", "gemini-pro", "gemini-flash-lite", "auto"]
+            ))
+            changed = true
+        }
+
+        if changed { persist() }
     }
 
     func persist() {
@@ -150,6 +247,7 @@ final class AppSettings {
     func remove(id: UUID) {
         providers.removeAll { $0.id == id }
         Keychain.delete(account: "provider." + id.uuidString)
+        Keychain.delete(account: "account." + id.uuidString)
         if lastProviderID == id {
             lastProviderID = providers.first?.id
         }
@@ -183,6 +281,20 @@ final class AppSettings {
     static func makeDefaultProviders() -> [ProviderConfig] {
         return [
             ProviderConfig(
+                name: "DeepSeek (аккаунт)",
+                kind: .deepSeekAccount,
+                baseURL: "https://chat.deepseek.com",
+                model: "deepseek-chat",
+                modelPresets: ["deepseek-chat", "deepseek-reasoner"]
+            ),
+            ProviderConfig(
+                name: "Gemini (аккаунт)",
+                kind: .geminiAccount,
+                baseURL: "https://gemini.google.com",
+                model: "gemini-flash",
+                modelPresets: ["gemini-flash", "gemini-pro", "gemini-flash-lite", "auto"]
+            ),
+            ProviderConfig(
                 name: "OpenRouter",
                 kind: .openAICompatible,
                 baseURL: "https://openrouter.ai/api/v1",
@@ -212,14 +324,14 @@ final class AppSettings {
                 ]
             ),
             ProviderConfig(
-                name: "DeepSeek",
+                name: "DeepSeek API",
                 kind: .openAICompatible,
                 baseURL: "https://api.deepseek.com/v1",
                 model: "deepseek-chat",
                 modelPresets: ["deepseek-chat", "deepseek-reasoner"]
             ),
             ProviderConfig(
-                name: "Gemini",
+                name: "Gemini API",
                 kind: .gemini,
                 baseURL: "https://generativelanguage.googleapis.com",
                 model: "gemini-2.5-flash",
