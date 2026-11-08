@@ -1,0 +1,363 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000201 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000101 /* AppDelegate.swift */; };
+		A1B2C3D4E5F6000000000202 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000102 /* Models.swift */; };
+		A1B2C3D4E5F6000000000203 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000103 /* Store.swift */; };
+		A1B2C3D4E5F6000000000204 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000104 /* Keychain.swift */; };
+		A1B2C3D4E5F6000000000205 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000105 /* Settings.swift */; };
+		A1B2C3D4E5F6000000000206 /* HTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000106 /* HTTP.swift */; };
+		A1B2C3D4E5F6000000000207 /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000107 /* Markdown.swift */; };
+		A1B2C3D4E5F6000000000208 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000108 /* Theme.swift */; };
+		A1B2C3D4E5F6000000000209 /* ChatProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000109 /* ChatProvider.swift */; };
+		A1B2C3D4E5F600000000020A /* OpenAICompatibleProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010A /* OpenAICompatibleProvider.swift */; };
+		A1B2C3D4E5F600000000020B /* GeminiProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010B /* GeminiProvider.swift */; };
+		A1B2C3D4E5F600000000020C /* ProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010C /* ProviderFactory.swift */; };
+		A1B2C3D4E5F600000000020D /* ConversationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010D /* ConversationsViewController.swift */; };
+		A1B2C3D4E5F600000000020E /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010E /* ChatViewController.swift */; };
+		A1B2C3D4E5F600000000020F /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000010F /* MessageCell.swift */; };
+		A1B2C3D4E5F6000000000210 /* ComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000110 /* ComposerView.swift */; };
+		A1B2C3D4E5F6000000000211 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000111 /* SettingsViewController.swift */; };
+		A1B2C3D4E5F6000000000212 /* ProviderEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */; };
+		A1B2C3D4E5F6000000000213 /* InfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000113 /* InfoViewController.swift */; };
+		A1B2C3D4E5F6000000000214 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000005 /* UniChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UniChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6000000000101 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000102 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000103 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000104 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000105 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000106 /* HTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTP.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000107 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000108 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000109 /* ChatProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatProvider.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010A /* OpenAICompatibleProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleProvider.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010B /* GeminiProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiProvider.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010C /* ProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderFactory.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010D /* ConversationsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010E /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000010F /* MessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000110 /* ComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000111 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderEditorViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000113 /* InfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000115 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1B2C3D4E5F600000000000D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1B2C3D4E5F6000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F600000000000F /* UniChat */,
+				A1B2C3D4E5F6000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000005 /* UniChat.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F600000000000F /* UniChat */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000101 /* AppDelegate.swift */,
+				A1B2C3D4E5F6000000000010 /* Core */,
+				A1B2C3D4E5F6000000000011 /* Providers */,
+				A1B2C3D4E5F6000000000012 /* UI */,
+				A1B2C3D4E5F6000000000013 /* Resources */,
+				A1B2C3D4E5F6000000000115 /* Info.plist */,
+			);
+			path = UniChat;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000010 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000102 /* Models.swift */,
+				A1B2C3D4E5F6000000000103 /* Store.swift */,
+				A1B2C3D4E5F6000000000104 /* Keychain.swift */,
+				A1B2C3D4E5F6000000000105 /* Settings.swift */,
+				A1B2C3D4E5F6000000000106 /* HTTP.swift */,
+				A1B2C3D4E5F6000000000107 /* Markdown.swift */,
+				A1B2C3D4E5F6000000000108 /* Theme.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000011 /* Providers */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000109 /* ChatProvider.swift */,
+				A1B2C3D4E5F600000000010A /* OpenAICompatibleProvider.swift */,
+				A1B2C3D4E5F600000000010B /* GeminiProvider.swift */,
+				A1B2C3D4E5F600000000010C /* ProviderFactory.swift */,
+			);
+			path = Providers;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000012 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F600000000010D /* ConversationsViewController.swift */,
+				A1B2C3D4E5F600000000010E /* ChatViewController.swift */,
+				A1B2C3D4E5F600000000010F /* MessageCell.swift */,
+				A1B2C3D4E5F6000000000110 /* ComposerView.swift */,
+				A1B2C3D4E5F6000000000111 /* SettingsViewController.swift */,
+				A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */,
+				A1B2C3D4E5F6000000000113 /* InfoViewController.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000013 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1B2C3D4E5F6000000000004 /* UniChat */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F6000000000007 /* Build configuration list for PBXNativeTarget "UniChat" */;
+			buildPhases = (
+				A1B2C3D4E5F600000000000C /* Sources */,
+				A1B2C3D4E5F600000000000D /* Frameworks */,
+				A1B2C3D4E5F600000000000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UniChat;
+			productName = UniChat;
+			productReference = A1B2C3D4E5F6000000000005 /* UniChat.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1B2C3D4E5F6000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				ORGANIZATIONNAME = UniChat;
+				TargetAttributes = {
+					A1B2C3D4E5F6000000000004 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A1B2C3D4E5F6000000000006 /* Build configuration list for PBXProject "UniChat" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = ru;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ru,
+				Base,
+			);
+			mainGroup = A1B2C3D4E5F6000000000002;
+			productRefGroup = A1B2C3D4E5F6000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1B2C3D4E5F6000000000004 /* UniChat */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1B2C3D4E5F600000000000E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6000000000214 /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1B2C3D4E5F600000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6000000000201 /* AppDelegate.swift in Sources */,
+				A1B2C3D4E5F6000000000202 /* Models.swift in Sources */,
+				A1B2C3D4E5F6000000000203 /* Store.swift in Sources */,
+				A1B2C3D4E5F6000000000204 /* Keychain.swift in Sources */,
+				A1B2C3D4E5F6000000000205 /* Settings.swift in Sources */,
+				A1B2C3D4E5F6000000000206 /* HTTP.swift in Sources */,
+				A1B2C3D4E5F6000000000207 /* Markdown.swift in Sources */,
+				A1B2C3D4E5F6000000000208 /* Theme.swift in Sources */,
+				A1B2C3D4E5F6000000000209 /* ChatProvider.swift in Sources */,
+				A1B2C3D4E5F600000000020A /* OpenAICompatibleProvider.swift in Sources */,
+				A1B2C3D4E5F600000000020B /* GeminiProvider.swift in Sources */,
+				A1B2C3D4E5F600000000020C /* ProviderFactory.swift in Sources */,
+				A1B2C3D4E5F600000000020D /* ConversationsViewController.swift in Sources */,
+				A1B2C3D4E5F600000000020E /* ChatViewController.swift in Sources */,
+				A1B2C3D4E5F600000000020F /* MessageCell.swift in Sources */,
+				A1B2C3D4E5F6000000000210 /* ComposerView.swift in Sources */,
+				A1B2C3D4E5F6000000000211 /* SettingsViewController.swift in Sources */,
+				A1B2C3D4E5F6000000000212 /* ProviderEditorViewController.swift in Sources */,
+				A1B2C3D4E5F6000000000213 /* InfoViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1B2C3D4E5F6000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F6000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A1B2C3D4E5F600000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = UniChat/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F600000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = UniChat/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1B2C3D4E5F6000000000006 /* Build configuration list for PBXProject "UniChat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F6000000000008 /* Debug */,
+				A1B2C3D4E5F6000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F6000000000007 /* Build configuration list for PBXNativeTarget "UniChat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F600000000000A /* Debug */,
+				A1B2C3D4E5F600000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1B2C3D4E5F6000000000001 /* Project object */;
+}

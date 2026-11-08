@@ -1,0 +1,21 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# macOS
+.DS_Store
+
+# Artifacts
+Payload/
+pkg/
+*.ipa
+*.deb
+*.dSYM.zip
+
+# Fastlane / misc
+fastlane/report.xml
+fastlane/screenshots
