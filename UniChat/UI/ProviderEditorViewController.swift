@@ -303,10 +303,11 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
     }
 
     func textViewDidChange(_ textView: UITextView) {
+        let text = textView.text ?? ""
         if textView.tag == textViewTagSystem {
-            draft.systemPrompt = textView.text
+            draft.systemPrompt = text
         } else if textView.tag == textViewTagHeaders {
-            draft.extraHeaders = ProviderEditorViewController.parseHeaders(textView.text)
+            draft.extraHeaders = ProviderEditorViewController.parseHeaders(text)
         }
     }
 

@@ -109,7 +109,9 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
             }
         } else {
             cell.textLabel?.font = UIFont.systemFont(ofSize: 15)
+            cell.textLabel?.textColor = Theme.primaryText
             cell.detailTextLabel?.text = nil
+            cell.detailTextLabel?.textColor = Theme.secondaryText
 
             switch indexPath.row {
             case 0:

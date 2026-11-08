@@ -58,7 +58,10 @@ final class GeminiProvider: ChatProvider {
             return nil
         }
 
-        guard var components = URLComponents(string: apiRoot + "/models/" + model + ":streamGenerateContent") else {
+        var pathAllowed = CharacterSet.urlPathAllowed
+        pathAllowed.remove(charactersIn: "/")
+        guard let encodedModel = model.addingPercentEncoding(withAllowedCharacters: pathAllowed),
+              var components = URLComponents(string: apiRoot + "/models/" + encodedModel + ":streamGenerateContent") else {
             onFinish(ChatError(message: "Некорректный Base URL Gemini."))
             return nil
         }

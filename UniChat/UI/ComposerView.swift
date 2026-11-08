@@ -119,8 +119,6 @@ final class ComposerView: UIView, UITextViewDelegate {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        textView.text = ""
-        textViewDidChange(textView)
         delegate?.composer(self, didSend: trimmed)
     }
 
@@ -161,7 +159,7 @@ final class ComposerView: UIView, UITextViewDelegate {
     // MARK: - UITextViewDelegate
 
     func textViewDidChange(_ textView: UITextView) {
-        placeholderLabel.isHidden = !textView.text.isEmpty
+        placeholderLabel.isHidden = !(textView.text ?? "").isEmpty
         updateHeight()
         updateSendButton()
     }

@@ -270,6 +270,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
         conversation.updatedAt = Date()
         ConversationStore.shared.update(conversation)
+        composer.clear()
 
         autoScroll = true
         tableView.reloadData()
