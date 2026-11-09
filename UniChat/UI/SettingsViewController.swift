@@ -72,7 +72,7 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
         if section == 0 {
             return "Ключи и токены аккаунтов хранятся только на этом устройстве. Вход в DeepSeek и Gemini выполняется на настоящих сайтах провайдеров."
         }
-        return "UniChat 1.2 · iOS 12+ · Material You · без аналитики и собственного сервера."
+        return "UniChat 1.2.1 · iOS 12+ · Material You · без аналитики и собственного сервера."
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

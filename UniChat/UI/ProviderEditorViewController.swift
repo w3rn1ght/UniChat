@@ -16,6 +16,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     private var pendingKey = ""
     private var isTesting = false
+    private var isSaving = false
     private var wasDeleted = false
 
     private let textFieldTagName = 100
@@ -68,6 +69,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tableView.reloadData()
+        autoLoadModelsIfNeeded()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -193,7 +195,9 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             if indexPath.row == 3 {
                 return makeTextFieldCell(title: "Модель",
                                          text: draft.model,
-                                         placeholder: "gpt-4o-mini",
+                                         placeholder: draft.model.isEmpty
+                                            ? "Загрузится автоматически"
+                                            : "gpt-4o-mini",
                                          tag: textFieldTagModel,
                                          secure: false)
             }
@@ -384,7 +388,11 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             : (draft.kind == .geminiAccount ? "G" : "✦")
         let subtitle: String
         if ModelCatalog.supportsDiscovery(draft.kind) {
-            subtitle = "\(draft.modelPresets.count) в списке · автопоиск доступен"
+            if draft.modelPresets.isEmpty {
+                subtitle = "Список загрузится автоматически"
+            } else {
+                subtitle = "\(draft.modelPresets.count) в списке · автопоиск доступен"
+            }
         } else {
             subtitle = "\(draft.modelPresets.count) моделей аккаунта"
         }
@@ -510,6 +518,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             if !self.draft.modelPresets.contains(model) {
                 self.draft.modelPresets.insert(model, at: 0)
             }
+            AppSettings.shared.addRecentModel(model, providerID: self.draft.id)
             AppSettings.shared.upsert(self.draft)
             self.tableView.reloadData()
         }
@@ -568,20 +577,15 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
         case .gemini:
             draft.baseURL = "https://generativelanguage.googleapis.com"
-            if draft.modelPresets.isEmpty || draft.modelPresets.contains("gemini-flash") {
-                draft.modelPresets = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
-            }
-            if draft.model.isEmpty || draft.model == "gemini-flash" {
-                draft.model = "gemini-2.5-flash"
-            }
+            draft.modelPresets = []
+            draft.model = ""
 
         case .openAICompatible:
             if draft.baseURL == "https://chat.deepseek.com" || draft.baseURL == "https://gemini.google.com" {
                 draft.baseURL = "https://api.openai.com/v1"
             }
-            if draft.model.isEmpty || draft.model == "deepseek-chat" || draft.model == "gemini-flash" {
-                draft.model = "gpt-4o-mini"
-            }
+            draft.modelPresets = []
+            draft.model = ""
         }
 
         tableView.reloadData()
@@ -618,6 +622,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
     }
 
     private func save(silent: Bool) {
+        guard !isSaving else { return }
         applyFields()
 
         guard !draft.name.isEmpty else {
@@ -628,14 +633,97 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             if !silent { showAlert(title: "Нужен Base URL", message: "Введите адрес API.") }
             return
         }
-        guard !draft.model.isEmpty else {
-            if !silent { showAlert(title: "Нужна модель", message: "Введите название модели.") }
+
+        if !draft.model.isEmpty {
+            persistAndClose(silent: silent)
             return
         }
 
+        // Модель вводить не обязательно: пробуем загрузить список сам.
+        if silent {
+            draft.model = draft.modelPresets.first ?? ""
+            AppSettings.shared.upsert(draft)
+            return
+        }
+
+        guard ModelCatalog.supportsDiscovery(draft.kind) else {
+            draft.model = defaultModel(for: draft.kind)
+            guard !draft.model.isEmpty else {
+                showAlert(title: "Нужна модель", message: "Введите название модели.")
+                return
+            }
+            persistAndClose(silent: false)
+            return
+        }
+
+        guard draft.kind == .openAICompatible || draft.hasAPIKey else {
+            showAlert(title: "Нужен ключ",
+                      message: "Вставьте API-ключ — приложение само загрузит список моделей.")
+            return
+        }
+
+        isSaving = true
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        navigationItem.rightBarButtonItem?.title = "Загрузка…"
+
+        ModelCatalog.fetch(for: draft) { [weak self] result in
+            guard let self = self else { return }
+            self.isSaving = false
+            self.navigationItem.rightBarButtonItem?.isEnabled = true
+            self.navigationItem.rightBarButtonItem?.title = "Сохранить"
+
+            switch result {
+            case .success(let models) where !models.isEmpty:
+                self.draft.modelPresets = ModelCatalog.merged(models, with: self.draft)
+                self.draft.model = models[0]
+                self.modelField?.text = self.draft.model
+                AppSettings.shared.addRecentModel(self.draft.model, providerID: self.draft.id)
+                self.persistAndClose(silent: false)
+            case .failure(let error):
+                if self.view.window != nil {
+                    self.showAlert(title: "Не удалось получить модели",
+                                   message: error.localizedDescription + "\nПроверьте Base URL и ключ.")
+                }
+            default:
+                if self.view.window != nil {
+                    self.showAlert(title: "Список моделей пуст",
+                                   message: "Проверьте Base URL и ключ. Модель можно ввести вручную.")
+                }
+            }
+        }
+    }
+
+    private func persistAndClose(silent: Bool) {
         AppSettings.shared.upsert(draft)
-        if !silent {
+        if !silent, navigationController?.topViewController === self {
             navigationController?.popViewController(animated: true)
+        }
+    }
+
+    private func defaultModel(for kind: ProviderKind) -> String {
+        switch kind {
+        case .deepSeekAccount: return "deepseek-chat"
+        case .geminiAccount: return "gemini-flash"
+        case .gemini: return "gemini-2.5-flash"
+        case .openAICompatible: return ""
+        }
+    }
+
+    /// Тихо подтягивает модели при открытии провайдера, если их ещё нет.
+    private func autoLoadModelsIfNeeded() {
+        guard ModelCatalog.supportsDiscovery(draft.kind) else { return }
+        guard draft.kind == .openAICompatible || draft.hasAPIKey else { return }
+        guard draft.modelPresets.isEmpty || draft.model.isEmpty else { return }
+
+        ModelCatalog.fetch(for: draft) { [weak self] result in
+            guard let self = self, case .success(let models) = result, !models.isEmpty else { return }
+            self.draft.modelPresets = ModelCatalog.merged(models, with: self.draft)
+            if self.draft.model.isEmpty {
+                self.draft.model = models[0]
+            }
+            self.modelField?.text = self.draft.model
+            AppSettings.shared.upsert(self.draft)
+            self.tableView.reloadData()
         }
     }
 
@@ -692,6 +780,11 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                 merged.insert(self.draft.model, at: 0)
             }
             self.draft.modelPresets = merged
+            if self.draft.model.isEmpty {
+                self.draft.model = merged[0]
+                self.modelField?.text = self.draft.model
+                AppSettings.shared.addRecentModel(self.draft.model, providerID: self.draft.id)
+            }
             AppSettings.shared.upsert(self.draft)
             self.tableView.reloadData()
         }

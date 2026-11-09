@@ -213,4 +213,56 @@ enum ModelCatalog {
             }
         }.resume()
     }
+
+    // MARK: - Массовое обновление
+
+    /// Обновляет списки моделей у всех готовых провайдеров. Модели сохраняются
+    /// в настройках, поэтому в следующий раз список доступен сразу.
+    static func refreshAll(_ providers: [ProviderConfig], completion: (() -> Void)? = nil) {
+        let targets = providers.filter { provider in
+            return supportsDiscovery(provider.kind)
+                && !provider.baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && provider.isReady
+        }
+        guard !targets.isEmpty else {
+            DispatchQueue.main.async { completion?() }
+            return
+        }
+
+        let group = DispatchGroup()
+
+        for provider in targets {
+            group.enter()
+            fetch(for: provider) { result in
+                defer { group.leave() }
+                guard case .success(let models) = result, !models.isEmpty else { return }
+
+                let latest = AppSettings.shared.provider(id: provider.id) ?? provider
+                var merged = models
+                if !latest.model.isEmpty && !merged.contains(latest.model) {
+                    merged.insert(latest.model, at: 0)
+                }
+
+                var updated = latest
+                updated.modelPresets = merged
+                if updated.model.isEmpty {
+                    updated.model = merged[0]
+                }
+                AppSettings.shared.upsert(updated)
+            }
+        }
+
+        group.notify(queue: .main) {
+            completion?()
+        }
+    }
+
+    /// Сливает свежий список с уже сохранёнными моделями, не теряя выбранную.
+    static func merged(_ models: [String], with provider: ProviderConfig) -> [String] {
+        var result = models
+        if !provider.model.isEmpty && !result.contains(provider.model) {
+            result.insert(provider.model, at: 0)
+        }
+        return result
+    }
 }

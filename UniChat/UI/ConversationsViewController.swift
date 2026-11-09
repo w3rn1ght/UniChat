@@ -7,6 +7,7 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
     private let emptyBadge = CircleBadgeView()
     private let fab = UIButton(type: .custom)
     private let cellIdentifier = "ConversationCell"
+    private static var didRefreshModels = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -84,6 +85,15 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
         super.viewWillAppear(animated)
         tableView.reloadData()
         updateEmptyState()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Один раз за запуск тихо обновляем списки моделей у готовых провайдеров.
+        if !ConversationsViewController.didRefreshModels {
+            ConversationsViewController.didRefreshModels = true
+            ModelCatalog.refreshAll(AppSettings.shared.providers)
+        }
     }
 
     private func updateEmptyState() {

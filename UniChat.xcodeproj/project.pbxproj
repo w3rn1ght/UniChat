@@ -38,6 +38,7 @@
 		A1B2C3D4E5F600000000021E /* MaterialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011E /* MaterialViews.swift */; };
 		A1B2C3D4E5F600000000021F /* ModelPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */; };
 		A1B2C3D4E5F6000000000220 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000120 /* Assets.xcassets */; };
+		A1B2C3D4E5F6000000000221 /* ChatModelPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000121 /* ChatModelPickerViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +75,7 @@
 		A1B2C3D4E5F600000000011E /* MaterialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialViews.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerViewController.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000120 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000121 /* ChatModelPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModelPickerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,6 +162,7 @@
 				A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */,
 				A1B2C3D4E5F600000000011E /* MaterialViews.swift */,
 				A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */,
+				A1B2C3D4E5F6000000000121 /* ChatModelPickerViewController.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -274,6 +277,7 @@
 				A1B2C3D4E5F600000000021D /* ModelCatalog.swift in Sources */,
 				A1B2C3D4E5F600000000021E /* MaterialViews.swift in Sources */,
 				A1B2C3D4E5F600000000021F /* ModelPickerViewController.swift in Sources */,
+				A1B2C3D4E5F6000000000221 /* ChatModelPickerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,14 +350,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -366,14 +370,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

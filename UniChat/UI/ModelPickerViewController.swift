@@ -5,7 +5,7 @@ final class ModelPickerViewController: UIViewController, UITableViewDataSource, 
     UISearchBarDelegate {
 
     private var provider: ProviderConfig
-    private let selectedModel: String
+    private var selectedModel: String
     private let onSelect: (String) -> Void
 
     private let tableView = UITableView(frame: .zero, style: .plain)
@@ -163,6 +163,11 @@ final class ModelPickerViewController: UIViewController, UITableViewDataSource, 
                 }
 
                 self.provider.modelPresets = merged
+                if self.provider.model.isEmpty {
+                    self.provider.model = merged[0]
+                    self.selectedModel = merged[0]
+                    self.onSelect(merged[0])
+                }
                 AppSettings.shared.upsert(self.provider)
                 self.models = merged
                 self.applyFilter(self.searchBar.text ?? "")

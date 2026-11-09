@@ -170,6 +170,15 @@ final class AppSettings {
     private let storageKey = "unichat.providers.v1"
     private let lastProviderKey = "unichat.lastProviderID"
     private let lastModelPrefix = "unichat.lastModel."
+    private let restoreAnyModelKey = "unichat.migration.restoreAnyModel.v1"
+    private let recentModelsKey = "unichat.recentModels.v1"
+    private let recentModelsLimit = 8
+
+    /// Недавно выбранная модель в связке с провайдером.
+    struct RecentModel {
+        let providerID: UUID
+        let model: String
+    }
 
     private(set) var providers: [ProviderConfig] = []
 
@@ -182,10 +191,39 @@ final class AppSettings {
         }
         if providers.isEmpty {
             providers = AppSettings.makeDefaultProviders()
+            defaults.set(true, forKey: restoreAnyModelKey)
             persist()
             return
         }
         migrateProviderList()
+        restoreAnyModelIfNeeded()
+    }
+
+    /// Возвращает случайно удалённый провайдер AnyModel (один раз на установку).
+    private func restoreAnyModelIfNeeded() {
+        if defaults.bool(forKey: restoreAnyModelKey) { return }
+        defaults.set(true, forKey: restoreAnyModelKey)
+
+        let alreadyPresent = providers.contains { provider in
+            return provider.baseURL.lowercased().contains("anymodel.org")
+                || provider.name.lowercased().contains("anymodel")
+        }
+        guard !alreadyPresent else { return }
+
+        providers.append(ProviderConfig(
+            name: "AnyModel",
+            kind: .openAICompatible,
+            baseURL: "https://anymodel.org/v1",
+            model: "deepseek-chat",
+            modelPresets: [
+                "deepseek-chat",
+                "deepseek-reasoner",
+                "gemini-2.5-flash",
+                "gpt-5",
+                "claude-sonnet-4"
+            ]
+        ))
+        persist()
     }
 
     /// Добавляет новые режимы аккаунтов в уже существующий список провайдеров.
@@ -248,6 +286,7 @@ final class AppSettings {
         providers.removeAll { $0.id == id }
         Keychain.delete(account: "provider." + id.uuidString)
         Keychain.delete(account: "account." + id.uuidString)
+        pruneRecentModels(for: id)
         if lastProviderID == id {
             lastProviderID = providers.first?.id
         }
@@ -274,6 +313,42 @@ final class AppSettings {
 
     func setLastModel(_ model: String, for providerID: UUID) {
         defaults.set(model, forKey: lastModelPrefix + providerID.uuidString)
+    }
+
+    // MARK: - Недавние модели
+
+    func recentModels() -> [RecentModel] {
+        guard let stored = defaults.array(forKey: recentModelsKey) as? [String] else {
+            return []
+        }
+        var result: [RecentModel] = []
+        for item in stored {
+            let parts = item.split(separator: "|", maxSplits: 1).map(String.init)
+            guard parts.count == 2,
+                  let providerID = UUID(uuidString: parts[0]),
+                  !parts[1].isEmpty else { continue }
+            result.append(RecentModel(providerID: providerID, model: parts[1]))
+        }
+        return result
+    }
+
+    func addRecentModel(_ model: String, providerID: UUID) {
+        let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let value = providerID.uuidString + "|" + trimmed
+        var items = (defaults.array(forKey: recentModelsKey) as? [String]) ?? []
+        items.removeAll { $0 == value }
+        items.insert(value, at: 0)
+        if items.count > recentModelsLimit {
+            items = Array(items.prefix(recentModelsLimit))
+        }
+        defaults.set(items, forKey: recentModelsKey)
+    }
+
+    private func pruneRecentModels(for providerID: UUID) {
+        guard let items = defaults.array(forKey: recentModelsKey) as? [String] else { return }
+        let prefix = providerID.uuidString + "|"
+        defaults.set(items.filter { !$0.hasPrefix(prefix) }, forKey: recentModelsKey)
     }
 
     // MARK: - Провайдеры по умолчанию

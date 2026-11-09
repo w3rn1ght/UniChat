@@ -99,7 +99,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         contextButton.backgroundColor = Theme.primaryContainer
         contextButton.layer.cornerRadius = 17
         contextButton.contentEdgeInsets = UIEdgeInsets(top: 7, left: 14, bottom: 7, right: 14)
-        contextButton.addTarget(self, action: #selector(showProviderMenu), for: .touchUpInside)
+        contextButton.addTarget(self, action: #selector(openModelPicker), for: .touchUpInside)
         contextBar.addSubview(contextButton)
 
         NSLayoutConstraint.activate([
@@ -413,6 +413,9 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         alert.addAction(UIAlertAction(title: "Переименовать", style: .default) { _ in
             self.promptRename()
         })
+        alert.addAction(UIAlertAction(title: "Провайдеры и ключи", style: .default) { _ in
+            self.navigationController?.pushViewController(SettingsViewController(), animated: true)
+        })
         alert.addAction(UIAlertAction(title: "Очистить историю", style: .destructive) { _ in
             self.clearHistory()
         })
@@ -473,7 +476,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
     // MARK: - Провайдер и модель
 
-    @objc private func showProviderMenu() {
+    @objc private func openModelPicker() {
         view.endEditing(true)
         let providers = AppSettings.shared.providers
         guard !providers.isEmpty else {
@@ -481,59 +484,35 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
             return
         }
 
-        let alert = UIAlertController(title: "Провайдер и модель", message: nil, preferredStyle: .actionSheet)
-
-        for provider in providers {
-            let mark = provider.id == conversation.providerID ? "✓ " : ""
-            alert.addAction(UIAlertAction(title: mark + provider.name, style: .default) { _ in
-                self.select(provider: provider)
-            })
+        let provider = currentProvider
+        let selected = conversation.model ?? provider?.model ?? ""
+        let picker = ChatModelPickerViewController(providers: providers,
+                                                   selectedProviderID: provider?.id,
+                                                   selectedModel: selected) { [weak self] provider, model in
+            self?.applySelection(provider: provider, model: model)
         }
-
-        alert.addAction(UIAlertAction(title: "Выбрать модель…", style: .default) { _ in
-            self.showModelMenu()
-        })
-        alert.addAction(UIAlertAction(title: "Настроить провайдеров…", style: .default) { _ in
-            self.navigationController?.pushViewController(SettingsViewController(), animated: true)
-        })
-        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-
-        alert.popoverPresentationController?.sourceView = contextButton
-        alert.popoverPresentationController?.sourceRect = contextButton.bounds
-        present(alert, animated: true, completion: nil)
+        navigationController?.pushViewController(picker, animated: true)
     }
 
-    private func select(provider: ProviderConfig) {
+    private func applySelection(provider: ProviderConfig, model: String) {
         conversation.providerID = provider.id
-        conversation.model = AppSettings.shared.lastModel(for: provider.id) ?? provider.model
+        conversation.model = model
         AppSettings.shared.lastProviderID = provider.id
+        AppSettings.shared.setLastModel(model, for: provider.id)
+        AppSettings.shared.addRecentModel(model, providerID: provider.id)
         conversation.updatedAt = Date()
         ConversationStore.shared.update(conversation)
         updateContextBar()
 
         if !provider.isReady {
-            presentNotReadyAlert(provider: provider)
+            // Ждём, пока список моделей закроется, иначе alert не покажется.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                guard let self = self,
+                      self.view.window != nil,
+                      self.presentedViewController == nil else { return }
+                self.presentNotReadyAlert(provider: provider)
+            }
         }
-    }
-
-    private func showModelMenu() {
-        guard let provider = currentProvider else { return }
-        view.endEditing(true)
-
-        let selected = conversation.model ?? provider.model
-        let picker = ModelPickerViewController(provider: provider,
-                                               selectedModel: selected) { [weak self] model in
-            self?.setModel(model, provider: provider)
-        }
-        navigationController?.pushViewController(picker, animated: true)
-    }
-
-    private func setModel(_ model: String, provider: ProviderConfig) {
-        conversation.model = model
-        AppSettings.shared.setLastModel(model, for: provider.id)
-        conversation.updatedAt = Date()
-        ConversationStore.shared.update(conversation)
-        updateContextBar()
     }
 
     // MARK: - Сообщения
