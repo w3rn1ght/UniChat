@@ -87,7 +87,7 @@ jobs:
           cat > pkg/DEBIAN/control <<'EOF'
           Package: com.unichat.app
           Name: UniChat
-          Version: 1.2.1
+          Version: 1.3.0
           Architecture: iphoneos-arm
           Description: AI chat client for iOS 12+ (DeepSeek/Gemini accounts, OpenRouter, AnyModel, APIs)
           Maintainer: UniChat

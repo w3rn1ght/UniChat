@@ -31,6 +31,11 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
         tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 96, right: 0)
         view.addSubview(tableView)
 
+        let longPress = UILongPressGestureRecognizer(target: self,
+                                                     action: #selector(handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.45
+        tableView.addGestureRecognizer(longPress)
+
         emptyBadge.configure(text: "✦",
                              background: Theme.primaryContainer,
                              foreground: Theme.onPrimaryContainer,
@@ -173,11 +178,97 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
         navigationController?.pushViewController(chat, animated: true)
     }
 
+    // MARK: - Удаление и переименование
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        let point = gesture.location(in: tableView)
+        guard let indexPath = tableView.indexPathForRow(at: point),
+              indexPath.row < ConversationStore.shared.conversations.count else { return }
+
+        let conversation = ConversationStore.shared.conversations[indexPath.row]
+        let alert = UIAlertController(title: conversation.title,
+                                      message: nil,
+                                      preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "Переименовать", style: .default) { _ in
+            self.promptRename(id: conversation.id)
+        })
+        alert.addAction(UIAlertAction(title: "Удалить чат", style: .destructive) { _ in
+            self.confirmDelete(id: conversation.id)
+        })
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+
+        alert.popoverPresentationController?.sourceView = tableView
+        alert.popoverPresentationController?.sourceRect = tableView.rectForRow(at: indexPath)
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func promptRename(id: UUID) {
+        guard let conversation = ConversationStore.shared.conversation(id: id) else { return }
+
+        let alert = UIAlertController(title: "Название чата", message: nil, preferredStyle: .alert)
+        alert.addTextField { field in
+            field.text = conversation.title
+            field.clearButtonMode = .whileEditing
+        }
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Сохранить", style: .default) { _ in
+            let value = (alert.textFields?.first?.text ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !value.isEmpty else { return }
+
+            if var updated = ConversationStore.shared.conversation(id: id) {
+                updated.title = value
+                updated.updatedAt = Date()
+                ConversationStore.shared.update(updated)
+                self.tableView.reloadData()
+            }
+        })
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func confirmDelete(id: UUID) {
+        guard let conversation = ConversationStore.shared.conversation(id: id) else { return }
+
+        let alert = UIAlertController(title: "Удалить чат?",
+                                      message: "«\(conversation.title)» и вся история сообщений будут удалены.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { _ in
+            ConversationStore.shared.delete(id: id)
+            self.tableView.reloadData()
+            self.updateEmptyState()
+        })
+        present(alert, animated: true, completion: nil)
+    }
+
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         guard editingStyle == .delete else { return }
         let conversation = ConversationStore.shared.conversations[indexPath.row]
         ConversationStore.shared.delete(id: conversation.id)
         tableView.deleteRows(at: [indexPath], with: .automatic)
         updateEmptyState()
+    }
+
+    func tableView(_ tableView: UITableView,
+                   trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard indexPath.row < ConversationStore.shared.conversations.count else { return nil }
+        let id = ConversationStore.shared.conversations[indexPath.row].id
+
+        let delete = UIContextualAction(style: .destructive, title: "Удалить") { _, _, completion in
+            self.confirmDelete(id: id)
+            completion(true)
+        }
+
+        let rename = UIContextualAction(style: .normal, title: "Название") { _, _, completion in
+            self.promptRename(id: id)
+            completion(true)
+        }
+        rename.backgroundColor = Theme.accent
+
+        let config = UISwipeActionsConfiguration(actions: [delete, rename])
+        config.performsFirstActionWithFullSwipe = false
+        return config
     }
 }

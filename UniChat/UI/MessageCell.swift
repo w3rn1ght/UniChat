@@ -7,6 +7,7 @@ final class MessageCell: UITableViewCell {
     private let bubbleView = UIView()
     private let stackView = UIStackView()
     private let headerLabel = UILabel()
+    private let attachmentsStack = UIStackView()
     private let messageLabel = UILabel()
 
     private var leadingConstraint: NSLayoutConstraint!
@@ -52,7 +53,13 @@ final class MessageCell: UITableViewCell {
         messageLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
 
+        attachmentsStack.axis = .vertical
+        attachmentsStack.spacing = 6
+        attachmentsStack.alignment = .leading
+        attachmentsStack.translatesAutoresizingMaskIntoConstraints = false
+
         stackView.addArrangedSubview(headerLabel)
+        stackView.addArrangedSubview(attachmentsStack)
         stackView.addArrangedSubview(messageLabel)
 
         leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 14)
@@ -110,19 +117,68 @@ final class MessageCell: UITableViewCell {
 
         let textColor: UIColor
         if isUser {
-            textColor = UIColor.white
+            textColor = Theme.onOutgoingBubble
         } else if message.isError {
             textColor = Theme.danger
         } else {
             textColor = Theme.primaryText
         }
 
+        configureAttachments(message.attachments, isUser: isUser)
+
         var displayText = message.text
         if streaming {
             displayText = displayText.isEmpty ? "▍" : displayText + " ▍"
         }
+        messageLabel.isHidden = displayText.isEmpty
         messageLabel.attributedText = Markdown.render(displayText, color: textColor)
         messageLabel.accessibilityLabel = displayText
+    }
+
+    private func configureAttachments(_ attachments: [ChatAttachment], isUser: Bool) {
+        for view in attachmentsStack.arrangedSubviews {
+            attachmentsStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        attachmentsStack.isHidden = attachments.isEmpty
+
+        for attachment in attachments {
+            if attachment.isImage, let image = UIImage(data: attachment.data) {
+                let imageView = UIImageView(image: image)
+                imageView.translatesAutoresizingMaskIntoConstraints = false
+                imageView.contentMode = .scaleAspectFill
+                imageView.clipsToBounds = true
+                imageView.layer.cornerRadius = 10
+                imageView.heightAnchor.constraint(equalToConstant: 150).isActive = true
+                imageView.widthAnchor.constraint(equalToConstant: 220).isActive = true
+                attachmentsStack.addArrangedSubview(imageView)
+            } else {
+                let container = UIView()
+                container.translatesAutoresizingMaskIntoConstraints = false
+                container.backgroundColor = isUser
+                    ? UIColor(white: 1.0, alpha: 0.16)
+                    : Theme.surfaceContainer
+                container.layer.cornerRadius = 10
+
+                let label = UILabel()
+                label.translatesAutoresizingMaskIntoConstraints = false
+                label.numberOfLines = 2
+                label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+                label.textColor = isUser ? Theme.onOutgoingBubble : Theme.primaryText
+                label.text = "📄 \(attachment.name)\n\(attachment.sizeText)"
+                container.addSubview(label)
+
+                NSLayoutConstraint.activate([
+                    label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+                    label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+                    label.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+                    label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
+                    container.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+                    container.widthAnchor.constraint(lessThanOrEqualToConstant: 240)
+                ])
+                attachmentsStack.addArrangedSubview(container)
+            }
+        }
     }
 
     func updateStreamingText(_ text: String, providerTitle: String?, isError: Bool) {
@@ -138,5 +194,11 @@ final class MessageCell: UITableViewCell {
         headerLabel.isHidden = false
         headerLabel.text = nil
         messageLabel.attributedText = nil
+        messageLabel.isHidden = false
+        for view in attachmentsStack.arrangedSubviews {
+            attachmentsStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        attachmentsStack.isHidden = true
     }
 }

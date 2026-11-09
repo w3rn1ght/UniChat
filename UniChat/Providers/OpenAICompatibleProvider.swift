@@ -52,7 +52,39 @@ final class OpenAICompatibleProvider: ChatProvider {
         }
         for message in chat.usableMessages {
             let role = message.role == .assistant ? "assistant" : "user"
-            messages.append(["role": role, "content": message.text])
+
+            if message.attachments.isEmpty {
+                messages.append(["role": role, "content": message.text])
+                continue
+            }
+
+            var parts: [[String: Any]] = []
+            if !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                parts.append(["type": "text", "text": message.text])
+            }
+            for attachment in message.attachments {
+                if attachment.isImage {
+                    let encoded = attachment.data.base64EncodedString()
+                    parts.append([
+                        "type": "image_url",
+                        "image_url": ["url": "data:\(attachment.mimeType);base64,\(encoded)"]
+                    ])
+                } else if let text = attachment.textContent() {
+                    parts.append([
+                        "type": "text",
+                        "text": "Файл «\(attachment.name)»:\n" + text
+                    ])
+                } else {
+                    parts.append([
+                        "type": "text",
+                        "text": "Прикреплён файл «\(attachment.name)» (\(attachment.mimeType), \(attachment.sizeText))."
+                    ])
+                }
+            }
+            if parts.isEmpty {
+                parts.append(["type": "text", "text": message.text])
+            }
+            messages.append(["role": role, "content": parts])
         }
         guard !messages.isEmpty else {
             onFinish(ChatError(message: "Пустой запрос."))

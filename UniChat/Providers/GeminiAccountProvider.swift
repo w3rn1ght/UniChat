@@ -26,6 +26,11 @@ final class GeminiAccountProvider: ChatProvider {
             return nil
         }
 
+        if chat.usableMessages.contains(where: { !$0.attachments.isEmpty }) {
+            onFinish(ChatError(message: "Фото и файлы недоступны в режиме входа в аккаунт. Используйте API-провайдера — OpenRouter, AnyModel или Gemini API."))
+            return nil
+        }
+
         let prompt = AccountPrompt.build(chat)
         guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             onFinish(ChatError(message: "Пустой запрос к Gemini."))

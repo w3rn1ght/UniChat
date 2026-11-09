@@ -74,16 +74,33 @@ final class GeminiProvider: ChatProvider {
         var contents: [[String: Any]] = []
         for message in chat.usableMessages {
             let role = message.role == .assistant ? "model" : "user"
+
+            var messageParts: [[String: Any]] = []
+            if !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                messageParts.append(["text": message.text])
+            }
+            for attachment in message.attachments {
+                messageParts.append([
+                    "inline_data": [
+                        "mime_type": attachment.mimeType,
+                        "data": attachment.data.base64EncodedString()
+                    ]
+                ])
+            }
+            if messageParts.isEmpty {
+                messageParts.append(["text": message.text])
+            }
+
             if var last = contents.last,
                (last["role"] as? String) == role,
                var parts = last["parts"] as? [[String: Any]] {
-                parts.append(["text": message.text])
+                parts.append(contentsOf: messageParts)
                 last["parts"] = parts
                 contents[contents.count - 1] = last
             } else {
                 contents.append([
                     "role": role,
-                    "parts": [["text": message.text]]
+                    "parts": messageParts
                 ])
             }
         }

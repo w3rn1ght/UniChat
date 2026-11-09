@@ -54,29 +54,42 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
     // MARK: - UITableViewDataSource
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 2
-    }
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section == 0 {
-            return providers.count + 1
-        }
         return 3
     }
 
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        switch section {
+        case 0: return providers.count + 1
+        case 1: return 1
+        default: return 3
+        }
+    }
+
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return section == 0 ? "ПРОВАЙДЕРЫ" : "СПРАВКА"
+        switch section {
+        case 0: return "ПРОВАЙДЕРЫ"
+        case 1: return "ОФОРМЛЕНИЕ"
+        default: return "СПРАВКА"
+        }
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        if section == 0 {
+        switch section {
+        case 0:
             return "Ключи и токены аккаунтов хранятся только на этом устройстве. Вход в DeepSeek и Gemini выполняется на настоящих сайтах провайдеров."
+        case 1:
+            return "Тёмная тема применяется сразу ко всему интерфейсу."
+        default:
+            return "UniChat 1.3.0 · iOS 12+ · Material You · без аналитики и собственного сервера."
         }
-        return "UniChat 1.2.1 · iOS 12+ · Material You · без аналитики и собственного сервера."
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return indexPath.section == 0 ? 86 : 80
+        switch indexPath.section {
+        case 0: return 86
+        case 1: return 70
+        default: return 80
+        }
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -85,7 +98,11 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
 
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = section == 0 ? "ПРОВАЙДЕРЫ" : "СПРАВКА"
+        switch section {
+        case 0: label.text = "ПРОВАЙДЕРЫ"
+        case 1: label.text = "ОФОРМЛЕНИЕ"
+        default: label.text = "СПРАВКА"
+        }
         label.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
         label.textColor = Theme.accent
         container.addSubview(label)
@@ -161,6 +178,17 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
             return cell
         }
 
+        if indexPath.section == 1 {
+            cell.configure(badgeText: Theme.isDark ? "☾" : "☀",
+                           badgeBackground: Theme.secondaryContainer,
+                           badgeForeground: Theme.onSecondaryContainer,
+                           title: "Тёмная тема",
+                           subtitle: Theme.isDark ? "Включена" : "Выключена",
+                           accessory: Theme.isDark ? "Вкл" : "Выкл",
+                           showsChevron: true)
+            return cell
+        }
+
         let badges = ["?", "↗", "i"]
         let titles = ["Как получить бесплатные ключи", "Gemini и работа в РФ", "О приложении"]
         let subtitles = ["Инструкции по ключам и аккаунтам", "VPN, релей или OpenRouter", "Версия, принципы, ограничения"]
@@ -190,6 +218,11 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
             return
         }
 
+        if indexPath.section == 1 {
+            toggleTheme()
+            return
+        }
+
         let topic: InfoViewController.Topic
         switch indexPath.row {
         case 0: topic = .keys
@@ -197,6 +230,19 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
         default: topic = .about
         }
         navigationController?.pushViewController(InfoViewController(topic: topic), animated: true)
+    }
+
+    private func toggleTheme() {
+        Theme.isDark = !Theme.isDark
+        guard let app = UIApplication.shared.delegate as? AppDelegate else {
+            tableView.reloadData()
+            return
+        }
+        // Пересобираем корневой экран в следующем цикле, чтобы не удалять
+        // текущий контроллер прямо во время обработки нажатия.
+        DispatchQueue.main.async {
+            app.applyTheme(resetRoot: true)
+        }
     }
 
     private func showAddProviderMenu(sourceView: UIView?) {

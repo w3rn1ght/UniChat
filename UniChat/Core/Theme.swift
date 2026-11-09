@@ -2,40 +2,115 @@ import UIKit
 
 /// Палитра и типографика в духе Material You (Material 3).
 ///
-/// iOS 12 не умеет динамические системные цвета, поэтому используется
-/// фиксированная светлая схема с выразительным фиолетовым seed-цветом.
+/// iOS 12 не умеет динамические системные цвета, поэтому режим хранится
+/// в UserDefaults. При переключении темы приложение пересобирает корневой
+/// экран — так все цвета применяются сразу и без «полу-тёмных» элементов.
 enum Theme {
+
+    // MARK: - Режим
+
+    private static let modeKey = "unichat.theme.mode"
+
+    /// Тёмная тема включена?
+    static var isDark: Bool {
+        get { return UserDefaults.standard.string(forKey: modeKey) == "dark" }
+        set { UserDefaults.standard.set(newValue ? "dark" : "light", forKey: modeKey) }
+    }
+
+    private static func dynamic(_ light: UIColor, _ dark: UIColor) -> UIColor {
+        return isDark ? dark : light
+    }
+
+    private static func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> UIColor {
+        return UIColor(red: r, green: g, blue: b, alpha: 1.0)
+    }
 
     // MARK: - Цвета
 
-    static let accent = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)      // #6750A4
-    static let accentSoft = UIColor(red: 0.918, green: 0.867, blue: 1.0, alpha: 1.0)    // #EADDFF
-    static let onAccent = UIColor.white
-    static let primaryContainer = UIColor(red: 0.918, green: 0.867, blue: 1.0, alpha: 1.0)
-    static let onPrimaryContainer = UIColor(red: 0.129, green: 0.0, blue: 0.365, alpha: 1.0) // #21005D
-    static let secondary = UIColor(red: 0.384, green: 0.357, blue: 0.443, alpha: 1.0)   // #625B71
-    static let secondaryContainer = UIColor(red: 0.910, green: 0.871, blue: 0.973, alpha: 1.0) // #E8DEF8
-    static let onSecondaryContainer = UIColor(red: 0.114, green: 0.098, blue: 0.169, alpha: 1.0)
-    static let tertiary = UIColor(red: 0.490, green: 0.322, blue: 0.376, alpha: 1.0)    // #7D5260
-    static let tertiaryContainer = UIColor(red: 1.0, green: 0.847, blue: 0.894, alpha: 1.0)
+    static var accent: UIColor {
+        return dynamic(rgb(0.404, 0.314, 0.643), rgb(0.816, 0.737, 1.0)) // #6750A4 / #D0BCFF
+    }
+    static var accentSoft: UIColor {
+        return dynamic(rgb(0.918, 0.867, 1.0), rgb(0.310, 0.216, 0.545)) // #EADDFF / #4F378B
+    }
+    static var onAccent: UIColor {
+        return dynamic(.white, rgb(0.220, 0.118, 0.447)) // white / #381E72
+    }
+    static var primaryContainer: UIColor {
+        return dynamic(rgb(0.918, 0.867, 1.0), rgb(0.310, 0.216, 0.545))
+    }
+    static var onPrimaryContainer: UIColor {
+        return dynamic(rgb(0.129, 0.0, 0.365), rgb(0.918, 0.867, 1.0))
+    }
+    static var secondary: UIColor {
+        return dynamic(rgb(0.384, 0.357, 0.443), rgb(0.800, 0.761, 0.863))
+    }
+    static var secondaryContainer: UIColor {
+        return dynamic(rgb(0.910, 0.871, 0.973), rgb(0.290, 0.267, 0.345))
+    }
+    static var onSecondaryContainer: UIColor {
+        return dynamic(rgb(0.114, 0.098, 0.169), rgb(0.910, 0.871, 0.973))
+    }
+    static var tertiary: UIColor {
+        return dynamic(rgb(0.490, 0.322, 0.376), rgb(0.937, 0.722, 0.784))
+    }
+    static var tertiaryContainer: UIColor {
+        return dynamic(rgb(1.0, 0.847, 0.894), rgb(0.388, 0.231, 0.282))
+    }
 
-    static let background = UIColor(red: 0.996, green: 0.969, blue: 1.0, alpha: 1.0)    // #FEF7FF
-    static let surface = background
-    static let card = UIColor.white
-    static let surfaceContainer = UIColor(red: 0.953, green: 0.929, blue: 0.969, alpha: 1.0) // #F3EDF7
-    static let surfaceContainerHigh = UIColor(red: 0.925, green: 0.902, blue: 0.941, alpha: 1.0) // #ECE6F0
-    static let surfaceVariant = UIColor(red: 0.906, green: 0.878, blue: 0.925, alpha: 1.0) // #E7E0EC
+    static var background: UIColor {
+        return dynamic(rgb(0.996, 0.969, 1.0), rgb(0.078, 0.071, 0.094)) // #FEF7FF / #141218
+    }
+    static var surface: UIColor { return background }
+    static var card: UIColor {
+        return dynamic(.white, rgb(0.114, 0.106, 0.125)) // #FFFFFF / #1D1B20
+    }
+    static var surfaceContainer: UIColor {
+        return dynamic(rgb(0.953, 0.929, 0.969), rgb(0.129, 0.122, 0.149)) // #F3EDF7 / #211F26
+    }
+    static var surfaceContainerHigh: UIColor {
+        return dynamic(rgb(0.925, 0.902, 0.941), rgb(0.169, 0.161, 0.188)) // #ECE6F0 / #2B2930
+    }
+    static var surfaceVariant: UIColor {
+        return dynamic(rgb(0.906, 0.878, 0.925), rgb(0.286, 0.271, 0.310)) // #E7E0EC / #49454F
+    }
 
-    static let incomingBubble = UIColor(red: 0.953, green: 0.929, blue: 0.969, alpha: 1.0)
-    static let outgoingBubble = accent
-    static let primaryText = UIColor(red: 0.114, green: 0.106, blue: 0.125, alpha: 1.0) // #1D1B20
-    static let secondaryText = UIColor(red: 0.286, green: 0.271, blue: 0.310, alpha: 1.0) // #49454F
-    static let outline = UIColor(red: 0.475, green: 0.455, blue: 0.494, alpha: 1.0)     // #79747E
-    static let separator = UIColor(red: 0.792, green: 0.769, blue: 0.816, alpha: 1.0)   // #CAC4D0
-    static let danger = UIColor(red: 0.702, green: 0.149, blue: 0.118, alpha: 1.0)      // #B3261E
-    static let dangerContainer = UIColor(red: 0.976, green: 0.871, blue: 0.863, alpha: 1.0)
-    static let success = UIColor(red: 0.220, green: 0.416, blue: 0.125, alpha: 1.0)     // #386A20
-    static let warning = UIColor(red: 0.478, green: 0.349, blue: 0.0, alpha: 1.0)       // #7A5900
+    static var incomingBubble: UIColor {
+        return dynamic(rgb(0.953, 0.929, 0.969), rgb(0.129, 0.122, 0.149))
+    }
+    static var outgoingBubble: UIColor {
+        return dynamic(rgb(0.404, 0.314, 0.643), rgb(0.310, 0.216, 0.545))
+    }
+    static var onOutgoingBubble: UIColor {
+        return dynamic(.white, rgb(0.918, 0.867, 1.0))
+    }
+    static var primaryText: UIColor {
+        return dynamic(rgb(0.114, 0.106, 0.125), rgb(0.902, 0.878, 0.914)) // #1D1B20 / #E6E0E9
+    }
+    static var secondaryText: UIColor {
+        return dynamic(rgb(0.286, 0.271, 0.310), rgb(0.792, 0.769, 0.816)) // #49454F / #CAC4D0
+    }
+    static var outline: UIColor {
+        return dynamic(rgb(0.475, 0.455, 0.494), rgb(0.576, 0.561, 0.600)) // #79747E / #938F99
+    }
+    static var separator: UIColor {
+        return dynamic(rgb(0.792, 0.769, 0.816), rgb(0.286, 0.271, 0.310)) // #CAC4D0 / #49454F
+    }
+    static var danger: UIColor {
+        return dynamic(rgb(0.702, 0.149, 0.118), rgb(1.0, 0.706, 0.671)) // #B3261E / #FFB4AB
+    }
+    static var dangerContainer: UIColor {
+        return dynamic(rgb(0.976, 0.871, 0.863), rgb(0.549, 0.114, 0.094))
+    }
+    static var success: UIColor {
+        return dynamic(rgb(0.220, 0.416, 0.125), rgb(0.718, 0.953, 0.592)) // #386A20 / #B7F397
+    }
+    static var successContainer: UIColor {
+        return dynamic(rgb(0.827, 0.906, 0.847), rgb(0.118, 0.227, 0.102))
+    }
+    static var warning: UIColor {
+        return dynamic(rgb(0.478, 0.349, 0.0), rgb(0.961, 0.843, 0.478)) // #7A5900 / #F5D77A
+    }
 
     // MARK: - Геометрия
 
@@ -87,6 +162,7 @@ enum Theme {
     static func configureAppearance() {
         let navigationBar = UINavigationBar.appearance()
         navigationBar.isTranslucent = false
+        navigationBar.barStyle = isDark ? .black : .default
         navigationBar.barTintColor = surface
         navigationBar.backgroundColor = surface
         navigationBar.tintColor = accent
@@ -111,6 +187,8 @@ enum Theme {
         let searchBar = UISearchBar.appearance()
         searchBar.tintColor = accent
         searchBar.barTintColor = surface
+
+        UISwitch.appearance().onTintColor = accent
     }
 
     static func applyCardStyle(_ view: UIView, radius: CGFloat = cornerLarge, color: UIColor = card) {
@@ -123,11 +201,14 @@ enum Theme {
     }
 
     static func applyShadow(_ view: UIView,
-                            color: UIColor = UIColor(red: 0.129, green: 0.0, blue: 0.365, alpha: 1.0),
+                            color: UIColor? = nil,
                             opacity: Float = 0.10,
                             radius: CGFloat = 10,
                             offset: CGSize = CGSize(width: 0, height: 4)) {
-        view.layer.shadowColor = color.cgColor
+        let shadowColor = color ?? (isDark
+            ? UIColor.black
+            : UIColor(red: 0.129, green: 0.0, blue: 0.365, alpha: 1.0))
+        view.layer.shadowColor = shadowColor.cgColor
         view.layer.shadowOpacity = opacity
         view.layer.shadowRadius = radius
         view.layer.shadowOffset = offset
@@ -135,13 +216,21 @@ enum Theme {
     }
 
     static func toneColor(for index: Int) -> UIColor {
-        let tones: [UIColor] = [
-            UIColor(red: 0.918, green: 0.867, blue: 1.0, alpha: 1.0),
-            UIColor(red: 0.910, green: 0.871, blue: 0.973, alpha: 1.0),
-            UIColor(red: 1.0, green: 0.847, blue: 0.894, alpha: 1.0),
-            UIColor(red: 0.827, green: 0.906, blue: 0.847, alpha: 1.0),
-            UIColor(red: 1.0, green: 0.902, blue: 0.812, alpha: 1.0)
+        let lightTones: [UIColor] = [
+            rgb(0.918, 0.867, 1.0),
+            rgb(0.910, 0.871, 0.973),
+            rgb(1.0, 0.847, 0.894),
+            rgb(0.827, 0.906, 0.847),
+            rgb(1.0, 0.902, 0.812)
         ]
+        let darkTones: [UIColor] = [
+            rgb(0.310, 0.216, 0.545),
+            rgb(0.290, 0.267, 0.345),
+            rgb(0.388, 0.231, 0.282),
+            rgb(0.118, 0.227, 0.102),
+            rgb(0.360, 0.251, 0.180)
+        ]
+        let tones = isDark ? darkTones : lightTones
         return tones[abs(index) % tones.count]
     }
 

@@ -45,14 +45,19 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = Theme.surface
 
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Готово",
-                                                            style: .done,
-                                                            target: self,
-                                                            action: #selector(manualCheck))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Сброс",
+        let doneItem = UIBarButtonItem(title: "Готово",
+                                       style: .done,
+                                       target: self,
+                                       action: #selector(manualCheck))
+        let resetItem = UIBarButtonItem(title: "Сброс",
+                                        style: .plain,
+                                        target: self,
+                                        action: #selector(confirmReset))
+        navigationItem.rightBarButtonItems = [resetItem, doneItem]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Закрыть",
                                                            style: .plain,
                                                            target: self,
-                                                           action: #selector(confirmReset))
+                                                           action: #selector(closeTapped))
 
         setupHeader()
         setupWebView()
@@ -218,6 +223,12 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         checkAccount(manual: true)
     }
 
+    @objc private func closeTapped() {
+        view.endEditing(true)
+        stopPolling()
+        navigationController?.popViewController(animated: true)
+    }
+
     private func setStatus(_ text: String, error: Bool = false) {
         statusLabel.text = text
         statusLabel.textColor = error ? Theme.danger : Theme.primaryText
@@ -278,6 +289,10 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
           try {
             var w = window.WIZ_global_data;
             if (w && w.SNlM0e && String(w.SNlM0e).length > 10) { return 'ready'; }
+          } catch (e) {}
+          try {
+            var html = document.documentElement ? document.documentElement.innerHTML : '';
+            if (/"SNlM0e"\\s*:\\s*"[^"]{10,}"/.test(html)) { return 'ready'; }
           } catch (e) {}
           return '';
         })()

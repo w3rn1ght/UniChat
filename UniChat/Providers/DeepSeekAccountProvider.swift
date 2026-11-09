@@ -53,6 +53,11 @@ final class DeepSeekAccountProvider: ChatProvider {
             return nil
         }
 
+        if chat.usableMessages.contains(where: { !$0.attachments.isEmpty }) {
+            onFinish(ChatError(message: "Фото и файлы недоступны в режиме входа в аккаунт. Используйте API-провайдера — OpenRouter, AnyModel или Gemini API."))
+            return nil
+        }
+
         let model = (chat.model.isEmpty ? config.model : chat.model)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let prompt = AccountPrompt.build(chat)

@@ -205,8 +205,12 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
               try {
                 var w = window.WIZ_global_data;
                 if (w && w.SNlM0e && String(w.SNlM0e).length > 10) { return 'ready'; }
-                return 'wait';
-              } catch (e) { return 'wait'; }
+              } catch (e) {}
+              try {
+                var html = document.documentElement ? document.documentElement.innerHTML : '';
+                if (/"SNlM0e"\\s*:\\s*"[^"]{10,}"/.test(html)) { return 'ready'; }
+              } catch (e) {}
+              return 'wait';
             })()
             """
 
@@ -535,9 +539,9 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
         var result = {};
         try {
           var html = document.documentElement ? document.documentElement.innerHTML : '';
-          var at = html.match(/"SNlM0e":"([^"]*)"/);
+          var at = html.match(/"SNlM0e"\s*:\s*"([^"]*)"/);
           if (at) { result.SNlM0e = at[1]; }
-          var sid = html.match(/"FdrFJe":"([^"]*)"/);
+          var sid = html.match(/"FdrFJe"\s*:\s*"([^"]*)"/);
           if (sid) { result.FdrFJe = sid[1]; }
         } catch (e) {}
         return result;

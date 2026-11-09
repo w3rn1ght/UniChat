@@ -20,7 +20,8 @@ struct ChatRequest {
         return messages.filter { message in
             message.role != .system &&
             !message.isError &&
-            !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            (!message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !message.attachments.isEmpty)
         }
     }
 

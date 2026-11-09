@@ -1,6 +1,8 @@
 import UIKit
 
-final class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ComposerViewDelegate {
+final class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate,
+    ComposerViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,
+    UIDocumentPickerDelegate {
 
     private var conversation: Conversation
     private let tableView = UITableView(frame: .zero, style: .plain)
@@ -248,8 +250,9 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
     // MARK: - Composer
 
-    func composer(_ composer: ComposerView, didSend text: String) {
+    func composer(_ composer: ComposerView, didSend text: String, attachments: [ChatAttachment]) {
         guard !isStreaming else { return }
+        guard !text.isEmpty || !attachments.isEmpty else { return }
 
         guard let provider = currentProvider else {
             presentSimpleAlert(title: "Нет провайдера", message: "Добавьте провайдера в настройках.")
@@ -260,16 +263,25 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
             return
         }
 
+        if provider.kind.isAccount && !attachments.isEmpty {
+            presentSimpleAlert(
+                title: "Вложения недоступны",
+                message: "В режиме входа в аккаунт нельзя отправлять фото и файлы. Выберите API-провайдера (OpenRouter, AnyModel или Gemini API)."
+            )
+            return
+        }
+
         conversation.providerID = provider.id
         if (conversation.model ?? "").isEmpty {
             conversation.model = provider.model
         }
 
-        let message = ChatMessage(role: .user, text: text)
+        let message = ChatMessage(role: .user, text: text, attachments: attachments)
         conversation.messages.append(message)
 
         if conversation.title == "Новый чат" || conversation.title.isEmpty {
-            conversation.title = ChatViewController.makeTitle(from: text)
+            let titleSource = text.isEmpty ? (attachments.first?.name ?? "Вложение") : text
+            conversation.title = ChatViewController.makeTitle(from: titleSource)
             navigationItem.title = conversation.title
         }
 
@@ -289,6 +301,29 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         guard isStreaming else { return }
         wasCancelled = true
         activeSession?.cancel()
+    }
+
+    func composerDidRequestAttachment(_ composer: ComposerView) {
+        guard !isStreaming else { return }
+        view.endEditing(true)
+
+        let alert = UIAlertController(title: "Прикрепить", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Фото из галереи", style: .default) { _ in
+            self.openPhotoLibrary()
+        })
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            alert.addAction(UIAlertAction(title: "Сделать фото", style: .default) { _ in
+                self.openCamera()
+            })
+        }
+        alert.addAction(UIAlertAction(title: "Файл", style: .default) { _ in
+            self.openDocumentPicker()
+        })
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+
+        alert.popoverPresentationController?.sourceView = composer
+        alert.popoverPresentationController?.sourceRect = composer.bounds
+        present(alert, animated: true, completion: nil)
     }
 
     private func beginStreaming(provider: ProviderConfig) {
@@ -402,6 +437,117 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         tableView.reloadData()
         updateEmptyState()
         scrollToBottom(animated: true)
+    }
+
+    // MARK: - Вложения
+
+    private func openPhotoLibrary() {
+        let picker = UIImagePickerController()
+        picker.sourceType = .photoLibrary
+        picker.mediaTypes = ["public.image"]
+        picker.delegate = self
+        present(picker, animated: true, completion: nil)
+    }
+
+    private func openCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            presentSimpleAlert(title: "Камера недоступна", message: "На этом устройстве нет камеры.")
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.mediaTypes = ["public.image"]
+        picker.delegate = self
+        present(picker, animated: true, completion: nil)
+    }
+
+    private func openDocumentPicker() {
+        let picker = UIDocumentPickerViewController(documentTypes: ["public.data"], in: .import)
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        present(picker, animated: true, completion: nil)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        let image = info[.originalImage] as? UIImage
+        picker.dismiss(animated: true) { [weak self] in
+            guard let self = self, let picked = image else { return }
+            guard let attachment = self.makeImageAttachment(from: picked, name: "photo.jpg") else {
+                self.presentSimpleAlert(title: "Не удалось добавить фото",
+                                        message: "Попробуйте выбрать другое изображение.")
+                return
+            }
+            self.composer.addAttachment(attachment)
+        }
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController,
+                        didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first else { return }
+        controller.dismiss(animated: true) { [weak self] in
+            self?.importDocument(at: url)
+        }
+    }
+
+    private func importDocument(at url: URL) {
+        let name = url.lastPathComponent
+        let sizeLimit = 12 * 1024 * 1024
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            presentSimpleAlert(title: "Не удалось прочитать файл", message: error.localizedDescription)
+            return
+        }
+
+        guard data.count <= sizeLimit else {
+            presentSimpleAlert(title: "Файл слишком большой",
+                               message: "Максимальный размер вложения — 12 МБ.")
+            return
+        }
+
+        let mime = ChatAttachment.mimeType(forFileName: name)
+        let kind: ChatAttachmentKind = mime.hasPrefix("image/") ? .image : .file
+        let attachment = ChatAttachment(name: name, mimeType: mime, kind: kind, data: data)
+        composer.addAttachment(attachment)
+    }
+
+    private func makeImageAttachment(from image: UIImage, name: String) -> ChatAttachment? {
+        let resized = resizedImage(image, maxDimension: 1600)
+        var quality: CGFloat = 0.82
+        var data = resized.jpegData(compressionQuality: quality)
+
+        while let current = data, current.count > 6 * 1024 * 1024, quality > 0.3 {
+            quality -= 0.15
+            data = resized.jpegData(compressionQuality: quality)
+        }
+
+        guard let finalData = data else { return nil }
+        return ChatAttachment(name: name,
+                              mimeType: "image/jpeg",
+                              kind: .image,
+                              data: finalData)
+    }
+
+    private func resizedImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        let largest = max(size.width, size.height)
+        guard largest > maxDimension, largest > 0 else { return image }
+
+        let ratio = maxDimension / largest
+        let target = CGSize(width: max(1, floor(size.width * ratio)),
+                            height: max(1, floor(size.height * ratio)))
+
+        UIGraphicsBeginImageContextWithOptions(target, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: target))
+        let result = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return result ?? image
     }
 
     // MARK: - Меню чата

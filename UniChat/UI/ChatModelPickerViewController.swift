@@ -488,7 +488,7 @@ final class UnifiedModelCell: CardCell {
 
         freeBadge.font = UIFont.systemFont(ofSize: 10, weight: .semibold)
         freeBadge.textColor = Theme.success
-        freeBadge.backgroundColor = UIColor(red: 0.827, green: 0.906, blue: 0.847, alpha: 1.0)
+        freeBadge.backgroundColor = Theme.successContainer
 
         checkLabel.text = "✓"
         checkLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
