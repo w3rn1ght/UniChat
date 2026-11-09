@@ -34,6 +34,10 @@
 		A1B2C3D4E5F600000000021A /* GeminiAccountProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011A /* GeminiAccountProvider.swift */; };
 		A1B2C3D4E5F600000000021B /* AccountLoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */; };
 		A1B2C3D4E5F600000000021C /* deepseek_pow.wasm in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */; };
+		A1B2C3D4E5F600000000021D /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011D /* ModelCatalog.swift */; };
+		A1B2C3D4E5F600000000021E /* MaterialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011E /* MaterialViews.swift */; };
+		A1B2C3D4E5F600000000021F /* ModelPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */; };
+		A1B2C3D4E5F6000000000220 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000120 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +70,10 @@
 		A1B2C3D4E5F600000000011A /* GeminiAccountProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiAccountProvider.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountLoginViewController.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */ = {isa = PBXFileReference; lastKnownFileType = file; path = deepseek_pow.wasm; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011D /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011E /* MaterialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialViews.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000120 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +127,7 @@
 				A1B2C3D4E5F6000000000107 /* Markdown.swift */,
 				A1B2C3D4E5F6000000000108 /* Theme.swift */,
 				A1B2C3D4E5F6000000000116 /* WebSupport.swift */,
+				A1B2C3D4E5F600000000011D /* ModelCatalog.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -149,6 +158,8 @@
 				A1B2C3D4E5F6000000000112 /* ProviderEditorViewController.swift */,
 				A1B2C3D4E5F6000000000113 /* InfoViewController.swift */,
 				A1B2C3D4E5F600000000011B /* AccountLoginViewController.swift */,
+				A1B2C3D4E5F600000000011E /* MaterialViews.swift */,
+				A1B2C3D4E5F600000000011F /* ModelPickerViewController.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -158,6 +169,7 @@
 			children = (
 				A1B2C3D4E5F6000000000114 /* LaunchScreen.storyboard */,
 				A1B2C3D4E5F600000000011C /* deepseek_pow.wasm */,
+				A1B2C3D4E5F6000000000120 /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -223,6 +235,7 @@
 			files = (
 				A1B2C3D4E5F6000000000214 /* LaunchScreen.storyboard in Resources */,
 				A1B2C3D4E5F600000000021C /* deepseek_pow.wasm in Resources */,
+				A1B2C3D4E5F6000000000220 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +271,9 @@
 				A1B2C3D4E5F6000000000219 /* GeminiWebSession.swift in Sources */,
 				A1B2C3D4E5F600000000021A /* GeminiAccountProvider.swift in Sources */,
 				A1B2C3D4E5F600000000021B /* AccountLoginViewController.swift in Sources */,
+				A1B2C3D4E5F600000000021D /* ModelCatalog.swift in Sources */,
+				A1B2C3D4E5F600000000021E /* MaterialViews.swift in Sources */,
+				A1B2C3D4E5F600000000021F /* ModelPickerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -330,18 +346,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 			};
 			name = Debug;
 		};
@@ -349,18 +366,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 			};
 			name = Release;
 		};

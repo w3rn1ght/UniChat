@@ -22,7 +22,7 @@ final class InfoViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = Theme.background
+        view.backgroundColor = Theme.surface
 
         switch topic {
         case .keys: title = "Ключи"
@@ -34,7 +34,7 @@ final class InfoViewController: UIViewController {
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.isEditable = false
         textView.isSelectable = true
-        textView.backgroundColor = Theme.background
+        textView.backgroundColor = Theme.surface
         textView.textContainerInset = UIEdgeInsets(top: 16, left: 16, bottom: 24, right: 16)
         textView.dataDetectorTypes = .link
         textView.alwaysBounceVertical = true
@@ -113,11 +113,12 @@ final class InfoViewController: UIViewController {
 
         default:
             return """
-            # UniChat 1.1
+            # UniChat 1.2
 
-            Клиент для iOS 12 и новее. UIKit, без сторонних библиотек.
+            Клиент для iOS 12 и новее. UIKit, без сторонних библиотек. Оформление — Material You.
 
             • Провайдеры: DeepSeek и Gemini со входом в обычный аккаунт, а также OpenAI-совместимые API (OpenRouter, AnyModel, DeepSeek, свои шлюзы) и Gemini API.
+            • Автопоиск моделей у OpenAI-совместимых шлюзов и Gemini; любую модель можно выбрать прямо в чате.
             • Стриминг ответов, Markdown, история чатов.
             • Токены и ключи — в Keychain, cookie аккаунтов — в защищённом хранилище WebKit. История — в Application Support, только на устройстве.
             • Нет аналитики, рекламы и собственного сервера.

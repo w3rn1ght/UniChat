@@ -42,7 +42,8 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         super.viewDidLoad()
 
         title = provider.kind == .deepSeekAccount ? "Вход в DeepSeek" : "Вход в Gemini"
-        view.backgroundColor = Theme.background
+        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = Theme.surface
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Готово",
                                                             style: .done,
@@ -71,17 +72,17 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
     private func setupHeader() {
         let header = UIView()
         header.translatesAutoresizingMaskIntoConstraints = false
-        header.backgroundColor = Theme.card
+        header.backgroundColor = Theme.surface
         view.addSubview(header)
 
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        statusLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         statusLabel.textColor = Theme.primaryText
         statusLabel.numberOfLines = 2
         header.addSubview(statusLabel)
 
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
-        hintLabel.font = UIFont.systemFont(ofSize: 11)
+        hintLabel.font = UIFont.systemFont(ofSize: 12)
         hintLabel.textColor = Theme.secondaryText
         hintLabel.numberOfLines = 0
         header.addSubview(hintLabel)
@@ -188,14 +189,28 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
 
     @objc private func pollTick() {
         guard !isFinishing, !isChecking else { return }
+
+        // На странице входа Google не трогаем DOM: там большой документ,
+        // а постоянная сериализация мешает кнопке «Далее» и вводу почты.
+        guard isRelevantHost else { return }
+
         pollCount += 1
-        if pollCount > 240 {
+        if pollCount > 360 {
             stopPolling()
             statusLabel.text = "Вход не завершён"
             statusLabel.textColor = Theme.danger
             return
         }
         checkAccount(manual: false)
+    }
+
+    private var isRelevantHost: Bool {
+        let host = (webView.url?.host ?? "").lowercased()
+        guard !host.isEmpty else { return false }
+        if provider.kind == .deepSeekAccount {
+            return host == "deepseek.com" || host.hasSuffix(".deepseek.com")
+        }
+        return host == "gemini.google.com" || host.hasSuffix(".gemini.google.com")
     }
 
     @objc private func manualCheck() {
@@ -264,10 +279,7 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
             var w = window.WIZ_global_data;
             if (w && w.SNlM0e && String(w.SNlM0e).length > 10) { return 'ready'; }
           } catch (e) {}
-          try {
-            var html = document.documentElement ? document.documentElement.innerHTML : '';
-            return /"SNlM0e":"[^"]{10,}"/.test(html) ? 'ready' : '';
-          } catch (e) { return ''; }
+          return '';
         })()
         """
 
@@ -429,7 +441,7 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.progress.setProgress(0, animated: false)
         }
-        if !isFinishing {
+        if !isFinishing && isRelevantHost {
             checkAccount(manual: false)
         }
     }
@@ -484,6 +496,38 @@ final class AccountLoginViewController: UIViewController, WKNavigationDelegate, 
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
             completionHandler()
+        })
+        present(alert, animated: true, completion: nil)
+    }
+
+    func webView(_ webView: WKWebView,
+                 runJavaScriptConfirmPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping (Bool) -> Void) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel) { _ in
+            completionHandler(false)
+        })
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            completionHandler(true)
+        })
+        present(alert, animated: true, completion: nil)
+    }
+
+    func webView(_ webView: WKWebView,
+                 runJavaScriptTextInputPanelWithPrompt prompt: String,
+                 defaultText: String?,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping (String?) -> Void) {
+        let alert = UIAlertController(title: nil, message: prompt, preferredStyle: .alert)
+        alert.addTextField { field in
+            field.text = defaultText
+        }
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel) { _ in
+            completionHandler(nil)
+        })
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            completionHandler(alert.textFields?.first?.text)
         })
         present(alert, animated: true, completion: nil)
     }

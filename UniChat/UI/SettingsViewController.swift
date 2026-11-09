@@ -3,7 +3,7 @@ import UIKit
 final class SettingsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     private let tableView = UITableView(frame: .zero, style: .grouped)
-    private let cellIdentifier = "SettingsCell"
+    private let cellIdentifier = "SettingsMaterialCell"
 
     private var providers: [ProviderConfig] {
         return AppSettings.shared.providers
@@ -13,15 +13,16 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
         super.viewDidLoad()
 
         title = "Настройки"
-        view.backgroundColor = Theme.background
+        navigationItem.largeTitleDisplayMode = .always
+        view.backgroundColor = Theme.surface
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.backgroundColor = Theme.background
-        tableView.rowHeight = 60
-        tableView.separatorColor = Theme.separator
+        tableView.backgroundColor = Theme.surface
+        tableView.separatorStyle = .none
         tableView.tableFooterView = UIView()
+        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 24, right: 0)
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
@@ -71,64 +72,105 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
         if section == 0 {
             return "Ключи и токены аккаунтов хранятся только на этом устройстве. Вход в DeepSeek и Gemini выполняется на настоящих сайтах провайдеров."
         }
-        return "UniChat 1.1 · iOS 12+ · без аналитики и без собственного сервера."
+        return "UniChat 1.2 · iOS 12+ · Material You · без аналитики и собственного сервера."
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return indexPath.section == 0 ? 86 : 80
+    }
+
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let container = UIView()
+        container.backgroundColor = Theme.surface
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = section == 0 ? "ПРОВАЙДЕРЫ" : "СПРАВКА"
+        label.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        label.textColor = Theme.accent
+        container.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 28),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+        ])
+        return container
+    }
+
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 38
+    }
+
+    func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
+        if let footer = view as? UITableViewHeaderFooterView {
+            footer.textLabel?.font = UIFont.systemFont(ofSize: 11)
+            footer.textLabel?.textColor = Theme.secondaryText
+            footer.contentView.backgroundColor = Theme.surface
+        }
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier)
-            ?? UITableViewCell(style: .subtitle, reuseIdentifier: cellIdentifier)
-
-        cell.backgroundColor = Theme.card
-        cell.textLabel?.textColor = Theme.primaryText
-        cell.detailTextLabel?.textColor = Theme.secondaryText
-        cell.accessoryType = .disclosureIndicator
-        cell.detailTextLabel?.numberOfLines = 1
-        cell.detailTextLabel?.lineBreakMode = .byTruncatingTail
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) as? MaterialRowCell
+            ?? MaterialRowCell(style: .default, reuseIdentifier: cellIdentifier)
 
         if indexPath.section == 0 {
             if indexPath.row < providers.count {
                 let provider = providers[indexPath.row]
-                cell.textLabel?.text = provider.name
-                cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-
-                if provider.kind.isAccount {
-                    cell.detailTextLabel?.text = provider.accountStatusText
-                    cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-                    cell.detailTextLabel?.textColor = provider.isReady ? Theme.accent : Theme.danger
-                } else {
-                    var detail = "\(provider.kind.shortTitle) · \(provider.model)"
-                    if provider.trimmedAPIKey.isEmpty {
-                        detail += "  ·  нет ключа"
-                    }
-                    cell.detailTextLabel?.text = detail
-                    cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-                    cell.detailTextLabel?.textColor = provider.trimmedAPIKey.isEmpty ? Theme.danger : Theme.secondaryText
+                let badgeText: String
+                switch provider.kind {
+                case .deepSeekAccount: badgeText = "D"
+                case .geminiAccount: badgeText = "G"
+                case .gemini: badgeText = "✦"
+                case .openAICompatible: badgeText = "◈"
                 }
-            } else {
-                cell.textLabel?.text = "Добавить провайдера"
-                cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
-                cell.textLabel?.textColor = Theme.accent
-                cell.detailTextLabel?.text = "API-ключ или вход в аккаунт"
-                cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-                cell.accessoryType = .none
-                cell.backgroundColor = Theme.card
-            }
-        } else {
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 15)
-            cell.textLabel?.textColor = Theme.primaryText
-            cell.detailTextLabel?.text = nil
-            cell.detailTextLabel?.textColor = Theme.secondaryText
 
-            switch indexPath.row {
-            case 0:
-                cell.textLabel?.text = "Как получить бесплатные ключи"
-            case 1:
-                cell.textLabel?.text = "Gemini и работа в РФ"
-            default:
-                cell.textLabel?.text = "О приложении"
+                var subtitle = provider.kind.shortTitle + " · " + provider.model
+                var accessory: String?
+                if provider.kind.isAccount {
+                    subtitle = provider.accountStatusText
+                    accessory = provider.isReady ? "Готов" : "Войти"
+                } else {
+                    if provider.trimmedAPIKey.isEmpty {
+                        subtitle = provider.kind.shortTitle + " · " + provider.model + " · нет ключа"
+                        accessory = "Нет ключа"
+                    } else {
+                        accessory = "Готов"
+                    }
+                }
+
+                cell.configure(badgeText: badgeText,
+                               badgeBackground: Theme.toneColor(for: indexPath.row),
+                               badgeForeground: Theme.primaryText,
+                               title: provider.name,
+                               subtitle: subtitle,
+                               accessory: accessory,
+                               titleColor: Theme.primaryText,
+                               showsChevron: true)
+                cell.accessoryView = nil
+            } else {
+                cell.configure(badgeText: "+",
+                               badgeBackground: Theme.secondaryContainer,
+                               badgeForeground: Theme.onSecondaryContainer,
+                               badgeFontSize: 20,
+                               title: "Добавить провайдера",
+                               subtitle: "API-ключ или вход в аккаунт",
+                               accessory: nil,
+                               titleColor: Theme.accent,
+                               showsChevron: true)
             }
+            return cell
         }
 
+        let badges = ["?", "↗", "i"]
+        let titles = ["Как получить бесплатные ключи", "Gemini и работа в РФ", "О приложении"]
+        let subtitles = ["Инструкции по ключам и аккаунтам", "VPN, релей или OpenRouter", "Версия, принципы, ограничения"]
+        cell.configure(badgeText: badges[indexPath.row],
+                       badgeBackground: Theme.toneColor(for: indexPath.row + 2),
+                       badgeForeground: Theme.primaryText,
+                       title: titles[indexPath.row],
+                       subtitle: subtitles[indexPath.row],
+                       accessory: nil,
+                       showsChevron: true)
         return cell
     }
 
@@ -182,7 +224,7 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
             self.openEditor(with: provider)
         })
 
-        alert.addAction(UIAlertAction(title: "OpenAI-совместимый", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "OpenAI-совместимый API", style: .default) { _ in
             let provider = ProviderConfig(
                 name: "Свой API",
                 kind: .openAICompatible,

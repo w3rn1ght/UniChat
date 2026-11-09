@@ -5,7 +5,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
 
     private var draft: ProviderConfig
     private let isNew: Bool
-    private let tableView = UITableView(frame: .zero, style: .grouped)
+    private let tableView = UITableView(frame: .zero, style: .plain)
 
     private var nameField: UITextField?
     private var baseField: UITextField?
@@ -39,7 +39,8 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         super.viewDidLoad()
 
         title = isNew ? "Новый провайдер" : draft.name
-        view.backgroundColor = Theme.background
+        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = Theme.surface
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Сохранить",
                                                             style: .done,
@@ -49,10 +50,11 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.backgroundColor = Theme.background
-        tableView.separatorColor = Theme.separator
+        tableView.backgroundColor = Theme.surface
+        tableView.separatorStyle = .none
         tableView.tableFooterView = UIView()
         tableView.keyboardDismissMode = .interactive
+        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 24, right: 0)
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
@@ -86,128 +88,157 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0: return draft.kind.isAccount ? 4 : 5
-        case 1: return 2
+        case 1: return 3
         default: return isNew ? 1 : 2
         }
     }
 
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0: return "ОСНОВНОЕ"
-        case 1: return "ДОПОЛНИТЕЛЬНО"
-        default: return nil
-        }
-    }
-
-    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        if section == 1 {
-            return "Системный промпт задаёт поведение модели.\nДоп. заголовки — по одному на строку в формате «Key: Value». Нужны для OpenRouter (HTTP-Referer, X-Title) и кастомных шлюзов."
-        }
-        return nil
-    }
-
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if indexPath.section == 1 { return 116 }
-        return 48
+        if indexPath.section == 1 {
+            return indexPath.row == 0 ? 76 : 122
+        }
+        if indexPath.section == 2 {
+            return 62
+        }
+        return 64
+    }
+
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 38
+    }
+
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return section == 1 ? 84 : 0.01
+    }
+
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let container = UIView()
+        container.backgroundColor = Theme.surface
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        switch section {
+        case 0: label.text = "ОСНОВНОЕ"
+        case 1: label.text = "МОДЕЛИ И ПОВЕДЕНИЕ"
+        default: label.text = "ПОДКЛЮЧЕНИЕ"
+        }
+        label.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        label.textColor = Theme.accent
+        container.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 28),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+        ])
+        return container
+    }
+
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        guard section == 1 else { return nil }
+
+        let container = UIView()
+        container.backgroundColor = Theme.surface
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.font = UIFont.systemFont(ofSize: 11)
+        label.textColor = Theme.secondaryText
+        label.text = "Список моделей загружается с сервера провайдера. Системный промпт задаёт поведение модели. Доп. заголовки — по одному на строку в формате «Key: Value» (OpenRouter: HTTP-Referer, X-Title)."
+        container.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 28),
+            label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -28),
+            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -10)
+        ])
+        return container
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
             switch indexPath.row {
             case 0:
-                let cell = makeTextFieldCell(title: "Название",
-                                             text: draft.name,
-                                             placeholder: "Например, OpenRouter",
-                                             tag: textFieldTagName,
-                                             secure: false)
-                nameField = cell.contentView.viewWithTag(textFieldTagName) as? UITextField
-                return cell
+                return makeTextFieldCell(title: "Название",
+                                         text: draft.name,
+                                         placeholder: "Например, OpenRouter",
+                                         tag: textFieldTagName,
+                                         secure: false)
             case 1:
-                return makeTypeCell()
+                return makeValueCell(title: "Тип", value: draft.kind.shortTitle)
             default:
                 break
             }
 
             if draft.kind.isAccount {
                 if indexPath.row == 2 {
-                    let cell = makeTextFieldCell(title: "Модель",
-                                                 text: draft.model,
-                                                 placeholder: "gemini-flash",
-                                                 tag: textFieldTagModel,
-                                                 secure: false)
-                    modelField = cell.contentView.viewWithTag(textFieldTagModel) as? UITextField
-                    return cell
+                    return makeTextFieldCell(title: "Модель",
+                                             text: draft.model,
+                                             placeholder: "gemini-flash",
+                                             tag: textFieldTagModel,
+                                             secure: false)
                 }
                 return makeAccountCell()
             }
 
             if indexPath.row == 2 {
-                let cell = makeTextFieldCell(title: "Base URL",
-                                             text: draft.baseURL,
-                                             placeholder: "https://…",
-                                             tag: textFieldTagBase,
-                                             secure: false)
-                baseField = cell.contentView.viewWithTag(textFieldTagBase) as? UITextField
-                return cell
+                return makeTextFieldCell(title: "Base URL",
+                                         text: draft.baseURL,
+                                         placeholder: "https://…",
+                                         tag: textFieldTagBase,
+                                         secure: false)
             }
 
             if indexPath.row == 3 {
-                let cell = makeTextFieldCell(title: "Модель",
-                                             text: draft.model,
-                                             placeholder: "gemini-2.5-flash",
-                                             tag: textFieldTagModel,
-                                             secure: false)
-                modelField = cell.contentView.viewWithTag(textFieldTagModel) as? UITextField
-                return cell
+                return makeTextFieldCell(title: "Модель",
+                                         text: draft.model,
+                                         placeholder: "gpt-4o-mini",
+                                         tag: textFieldTagModel,
+                                         secure: false)
             }
 
             let placeholder = draft.hasAPIKey ? "Ключ сохранён — введите новый" : "Вставьте API-ключ"
-            let cell = makeTextFieldCell(title: "API-ключ",
-                                         text: pendingKey,
-                                         placeholder: placeholder,
-                                         tag: textFieldTagKey,
-                                         secure: true)
-            keyField = cell.contentView.viewWithTag(textFieldTagKey) as? UITextField
-            return cell
+            return makeTextFieldCell(title: "API-ключ",
+                                     text: pendingKey,
+                                     placeholder: placeholder,
+                                     tag: textFieldTagKey,
+                                     secure: true)
         }
 
         if indexPath.section == 1 {
             if indexPath.row == 0 {
-                let cell = makeTextViewCell(title: "Системный промпт",
-                                            text: draft.systemPrompt,
-                                            tag: textViewTagSystem)
-                systemTextView = cell.contentView.viewWithTag(textViewTagSystem) as? UITextView
-                return cell
-            } else {
-                let cell = makeTextViewCell(title: "Доп. заголовки",
-                                            text: ProviderEditorViewController.serializeHeaders(draft.extraHeaders),
-                                            tag: textViewTagHeaders)
-                headersTextView = cell.contentView.viewWithTag(textViewTagHeaders) as? UITextView
-                return cell
+                return makeModelsCell()
             }
+            if indexPath.row == 1 {
+                return makeTextViewCell(title: "Системный промпт",
+                                        text: draft.systemPrompt,
+                                        tag: textViewTagSystem)
+            }
+            return makeTextViewCell(title: "Доп. заголовки",
+                                    text: ProviderEditorViewController.serializeHeaders(draft.extraHeaders),
+                                    tag: textViewTagHeaders)
         }
 
         if indexPath.row == 0 {
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.backgroundColor = Theme.card
-            cell.textLabel?.text = isTesting ? "Проверяем…" : "Проверить подключение"
-            cell.textLabel?.textColor = Theme.accent
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-            cell.textLabel?.textAlignment = .center
+            let cell = MaterialActionCell(style: .default, reuseIdentifier: nil)
+            cell.configure(title: isTesting ? "Проверяем…" : "Проверить подключение",
+                           color: Theme.accent)
             if isTesting {
                 let spinner = UIActivityIndicatorView(style: .gray)
                 spinner.startAnimating()
-                cell.accessoryView = spinner
+                spinner.translatesAutoresizingMaskIntoConstraints = false
+                cell.cardView.addSubview(spinner)
+                NSLayoutConstraint.activate([
+                    spinner.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -20),
+                    spinner.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor)
+                ])
             }
             return cell
         }
 
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = Theme.card
-        cell.textLabel?.text = "Удалить провайдера"
-        cell.textLabel?.textColor = Theme.danger
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        cell.textLabel?.textAlignment = .center
+        let cell = MaterialActionCell(style: .default, reuseIdentifier: nil)
+        cell.configure(title: "Удалить провайдера", color: Theme.danger)
         return cell
     }
 
@@ -218,16 +249,14 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                                    placeholder: String,
                                    tag: Int,
                                    secure: Bool) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = Theme.card
-        cell.selectionStyle = .none
+        let cell = CardCell(style: .default, reuseIdentifier: nil)
 
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = title
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.systemFont(ofSize: 13, weight: .medium)
         label.textColor = Theme.secondaryText
-        cell.contentView.addSubview(label)
+        cell.cardView.addSubview(label)
 
         let field = UITextField()
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -236,66 +265,148 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         field.placeholder = placeholder
         field.font = UIFont.systemFont(ofSize: 15)
         field.textColor = Theme.primaryText
+        field.backgroundColor = Theme.surfaceContainer
+        field.layer.cornerRadius = 10
         field.autocorrectionType = .no
         field.autocapitalizationType = .none
         field.clearButtonMode = .whileEditing
         field.isSecureTextEntry = secure
         field.delegate = self
         field.addTarget(self, action: #selector(textFieldChanged(_:)), for: .editingChanged)
-        cell.contentView.addSubview(field)
+        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 10, height: 1))
+        field.leftViewMode = .always
+        cell.cardView.addSubview(field)
+
+        switch tag {
+        case textFieldTagName: nameField = field
+        case textFieldTagBase: baseField = field
+        case textFieldTagModel: modelField = field
+        case textFieldTagKey: keyField = field
+        default: break
+        }
 
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 16),
-            label.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
-            label.widthAnchor.constraint(equalToConstant: 92),
+            label.leadingAnchor.constraint(equalTo: cell.cardView.leadingAnchor, constant: 16),
+            label.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+            label.widthAnchor.constraint(equalToConstant: 82),
 
             field.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 8),
-            field.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
-            field.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
-            field.heightAnchor.constraint(equalToConstant: 36)
+            field.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -12),
+            field.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+            field.heightAnchor.constraint(equalToConstant: 38)
         ])
         return cell
     }
 
-    private func makeTypeCell() -> UITableViewCell {
-        let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-        cell.backgroundColor = Theme.card
-        cell.textLabel?.text = "Тип"
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 14)
-        cell.textLabel?.textColor = Theme.secondaryText
-        cell.detailTextLabel?.text = draft.kind.shortTitle
-        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15)
-        cell.detailTextLabel?.textColor = Theme.primaryText
-        cell.accessoryType = .disclosureIndicator
-        return cell
-    }
-
-    private func makeAccountCell() -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-        cell.backgroundColor = Theme.card
-        cell.textLabel?.text = "Аккаунт"
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 14)
-        cell.textLabel?.textColor = Theme.secondaryText
-
-        let connected = draft.isReady
-        cell.detailTextLabel?.text = draft.accountStatusText
-        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15)
-        cell.detailTextLabel?.textColor = connected ? Theme.accent : Theme.danger
-        cell.accessoryType = .disclosureIndicator
-        return cell
-    }
-
-    private func makeTextViewCell(title: String, text: String, tag: Int) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = Theme.card
-        cell.selectionStyle = .none
+    private func makeValueCell(title: String, value: String) -> UITableViewCell {
+        let cell = CardCell(style: .default, reuseIdentifier: nil)
 
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = title
-        label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        label.font = UIFont.systemFont(ofSize: 13, weight: .medium)
         label.textColor = Theme.secondaryText
-        cell.contentView.addSubview(label)
+        cell.cardView.addSubview(label)
+
+        let valueLabel = UILabel()
+        valueLabel.translatesAutoresizingMaskIntoConstraints = false
+        valueLabel.text = value
+        valueLabel.font = UIFont.systemFont(ofSize: 15, weight: .medium)
+        valueLabel.textColor = Theme.primaryText
+        valueLabel.textAlignment = .right
+        cell.cardView.addSubview(valueLabel)
+
+        let chevron = UILabel()
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        chevron.text = "›"
+        chevron.font = UIFont.systemFont(ofSize: 24)
+        chevron.textColor = Theme.outline
+        cell.cardView.addSubview(chevron)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: cell.cardView.leadingAnchor, constant: 16),
+            label.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+
+            chevron.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -12),
+            chevron.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+            chevron.widthAnchor.constraint(equalToConstant: 18),
+
+            valueLabel.leadingAnchor.constraint(greaterThanOrEqualTo: label.trailingAnchor, constant: 8),
+            valueLabel.trailingAnchor.constraint(equalTo: chevron.leadingAnchor, constant: -4),
+            valueLabel.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor)
+        ])
+        return cell
+    }
+
+    private func makeAccountCell() -> UITableViewCell {
+        let cell = CardCell(style: .default, reuseIdentifier: nil)
+
+        let title = UILabel()
+        title.translatesAutoresizingMaskIntoConstraints = false
+        title.text = "Аккаунт"
+        title.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        title.textColor = Theme.secondaryText
+        cell.cardView.addSubview(title)
+
+        let value = UILabel()
+        value.translatesAutoresizingMaskIntoConstraints = false
+        value.text = draft.accountStatusText
+        value.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        value.textColor = draft.isReady ? Theme.success : Theme.danger
+        value.textAlignment = .right
+        cell.cardView.addSubview(value)
+
+        let chevron = UILabel()
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        chevron.text = "›"
+        chevron.font = UIFont.systemFont(ofSize: 24)
+        chevron.textColor = Theme.outline
+        cell.cardView.addSubview(chevron)
+
+        NSLayoutConstraint.activate([
+            title.leadingAnchor.constraint(equalTo: cell.cardView.leadingAnchor, constant: 16),
+            title.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+
+            chevron.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -12),
+            chevron.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor),
+            chevron.widthAnchor.constraint(equalToConstant: 18),
+
+            value.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: 8),
+            value.trailingAnchor.constraint(equalTo: chevron.leadingAnchor, constant: -4),
+            value.centerYAnchor.constraint(equalTo: cell.cardView.centerYAnchor)
+        ])
+        return cell
+    }
+
+    private func makeModelsCell() -> UITableViewCell {
+        let cell = MaterialRowCell(style: .default, reuseIdentifier: nil)
+        let badgeText = draft.kind == .deepSeekAccount ? "D"
+            : (draft.kind == .geminiAccount ? "G" : "✦")
+        let subtitle: String
+        if ModelCatalog.supportsDiscovery(draft.kind) {
+            subtitle = "\(draft.modelPresets.count) в списке · автопоиск доступен"
+        } else {
+            subtitle = "\(draft.modelPresets.count) моделей аккаунта"
+        }
+        cell.configure(badgeText: badgeText,
+                       badgeBackground: Theme.primaryContainer,
+                       badgeForeground: Theme.onPrimaryContainer,
+                       title: "Модели",
+                       subtitle: subtitle,
+                       accessory: nil,
+                       showsChevron: true)
+        return cell
+    }
+
+    private func makeTextViewCell(title: String, text: String, tag: Int) -> UITableViewCell {
+        let cell = CardCell(style: .default, reuseIdentifier: nil)
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = title
+        label.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        label.textColor = Theme.secondaryText
+        cell.cardView.addSubview(label)
 
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
@@ -303,23 +414,29 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
         textView.text = text
         textView.font = UIFont.systemFont(ofSize: 14)
         textView.textColor = Theme.primaryText
-        textView.backgroundColor = Theme.background
-        textView.layer.cornerRadius = 8
-        textView.textContainerInset = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+        textView.backgroundColor = Theme.surfaceContainer
+        textView.layer.cornerRadius = 10
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         textView.autocorrectionType = .no
         textView.autocapitalizationType = .none
         textView.delegate = self
-        cell.contentView.addSubview(textView)
+        cell.cardView.addSubview(textView)
+
+        switch tag {
+        case textViewTagSystem: systemTextView = textView
+        case textViewTagHeaders: headersTextView = textView
+        default: break
+        }
 
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 16),
-            label.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
-            label.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
+            label.leadingAnchor.constraint(equalTo: cell.cardView.leadingAnchor, constant: 16),
+            label.topAnchor.constraint(equalTo: cell.cardView.topAnchor, constant: 9),
+            label.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -16),
 
-            textView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 12),
-            textView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -12),
-            textView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 6),
-            textView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8)
+            textView.leadingAnchor.constraint(equalTo: cell.cardView.leadingAnchor, constant: 12),
+            textView.trailingAnchor.constraint(equalTo: cell.cardView.trailingAnchor, constant: -12),
+            textView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 5),
+            textView.bottomAnchor.constraint(equalTo: cell.cardView.bottomAnchor, constant: -9)
         ])
         return cell
     }
@@ -366,6 +483,14 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             }
         }
 
+        if indexPath.section == 1 && indexPath.row == 0 {
+            view.endEditing(true)
+            applyFields()
+            AppSettings.shared.upsert(draft)
+            openModelPicker()
+            return
+        }
+
         if indexPath.section == 2 {
             view.endEditing(true)
             if indexPath.row == 0 {
@@ -374,6 +499,21 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                 confirmDelete()
             }
         }
+    }
+
+    private func openModelPicker() {
+        let picker = ModelPickerViewController(provider: draft,
+                                               selectedModel: draft.model) { [weak self] model in
+            guard let self = self else { return }
+            self.draft.model = model
+            self.modelField?.text = model
+            if !self.draft.modelPresets.contains(model) {
+                self.draft.modelPresets.insert(model, at: 0)
+            }
+            AppSettings.shared.upsert(self.draft)
+            self.tableView.reloadData()
+        }
+        navigationController?.pushViewController(picker, animated: true)
     }
 
     private func openAccountLogin() {
@@ -536,9 +676,24 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             switch result {
             case .success(let message):
                 self.showAlert(title: "Успешно", message: message)
+                self.loadModelsAfterTest()
             case .failure(let error):
                 self.showAlert(title: "Не удалось", message: error.localizedDescription)
             }
+        }
+    }
+
+    private func loadModelsAfterTest() {
+        guard ModelCatalog.supportsDiscovery(draft.kind) else { return }
+        ModelCatalog.fetch(for: draft) { [weak self] result in
+            guard let self = self, case .success(let models) = result, !models.isEmpty else { return }
+            var merged = models
+            if !self.draft.model.isEmpty && !merged.contains(self.draft.model) {
+                merged.insert(self.draft.model, at: 0)
+            }
+            self.draft.modelPresets = merged
+            AppSettings.shared.upsert(self.draft)
+            self.tableView.reloadData()
         }
     }
 

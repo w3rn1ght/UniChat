@@ -1,7 +1,7 @@
 # UniChat — ИИ-клиент для iOS 12+
 
-Нативный клиент чата с ИИ на UIKit. Работает с DeepSeek и Gemini через
-обычный вход в аккаунт, а также с OpenAI-совместимыми API
+Нативный клиент чата с ИИ на UIKit в стиле Material You. Работает с DeepSeek
+и Gemini через обычный вход в аккаунт, а также с OpenAI-совместимыми API
 (OpenRouter, AnyModel, DeepSeek, свои шлюзы) и Gemini API по ключу.
 Работает на iOS 12.0 и новее, без сторонних зависимостей.
 
@@ -10,11 +10,14 @@
 - Два режима доступа: вход в аккаунт DeepSeek/Gemini или API-ключ.
 - Стриминг ответов (SSE) и отмена запроса.
 - Несколько провайдеров, переключение на лету, выбор модели.
+- Автопоиск моделей у OpenAI-совместимых шлюзов и Gemini API; любую модель
+  можно выбрать прямо в чате, со поиском и ручным вводом.
 - Markdown в ответах: жирный, курсив, код, ссылки, списки, заголовки.
 - История чатов сохраняется локально (Application Support).
 - API-ключи и токены — в Keychain; cookie аккаунтов — в хранилище WebKit.
 - Свой Base URL и дополнительные заголовки для любого провайдера.
 - Проверка подключения прямо в настройках.
+- Оформление Material You: палитра M3, карточки, FAB, крупные заголовки.
 - Тёмная тема не поддерживается осознанно: iOS 12 её не имеет, интерфейс светлый.
 
 ## Требования
@@ -78,8 +81,9 @@ Keychain: если iOS отклонит Keychain для неподписанно
 | Gemini API | API-ключ aistudio.google.com/apikey | `https://generativelanguage.googleapis.com` |
 | Gemini через релей | тот же ключ Google | адрес вашего Worker |
 
-Названия моделей у провайдеров меняются. Если модель не найдена —
-введите её вручную: «Провайдер и модель» → «Своя модель…».
+Названия моделей у провайдеров меняются. Список моделей подтягивается
+автоматически (`GET {base}/models` для OpenAI-совместимых, `GET /v1beta/models`
+для Gemini). Если нужной модели нет — выберите «Своя модель» в списке моделей.
 
 ## Вход в аккаунт DeepSeek и Gemini
 
@@ -143,8 +147,9 @@ UniChat/
     │   ├── Settings.swift        # ProviderConfig, AppSettings
     │   ├── HTTP.swift            # SSE-парсер, ошибки
     │   ├── Markdown.swift        # Markdown → NSAttributedString
-    │   ├── WebSupport.swift      # общий WKWebView, Safari UA, cookie
-    │   └── Theme.swift           # цвета, шрифты, форматирование
+    │   ├── WebSupport.swift      # общий WKWebView, Safari UA, полифиллы
+    │   ├── ModelCatalog.swift     # автопоиск моделей провайдеров
+    │   └── Theme.swift           # палитра Material You, шрифты, форматирование
     ├── Providers/
     │   ├── ChatProvider.swift    # протокол + тест подключения
     │   ├── OpenAICompatibleProvider.swift
@@ -155,6 +160,7 @@ UniChat/
     │   ├── GeminiAccountProvider.swift
     │   └── ProviderFactory.swift
     ├── Resources/
+    │   ├── Assets.xcassets       # иконка приложения (все размеры)
     │   └── deepseek_pow.wasm     # официальный PoW-модуль DeepSeek
     └── UI/
         ├── ConversationsViewController.swift
@@ -163,6 +169,8 @@ UniChat/
         ├── ComposerView.swift
         ├── SettingsViewController.swift
         ├── ProviderEditorViewController.swift
+        ├── MaterialViews.swift   # карточки, строки, тональные значки
+        ├── ModelPickerViewController.swift
         ├── AccountLoginViewController.swift
         └── InfoViewController.swift
 ```
@@ -178,7 +186,9 @@ UniChat/
 ## Особенности iOS 12
 
 - UIKit only: без SwiftUI, Combine и async/await.
-- Без SF Symbols (появились в iOS 13) — текстовые иконки.
+- Без SF Symbols (появились в iOS 13) — текстовые иконки и символы.
+- Material You реализован вручную: фиксированная светлая палитра M3 с seed
+  `#6750A4`, без динамических системных цветов.
 - Стриминг через `URLSessionDataDelegate`, а не `URLSessionWebSocketTask`.
 - Аккаунты — через `WKWebView`; cookie хранит `WKWebsiteDataStore`.
 - `NSAllowsArbitraryLoads = true` — чтобы можно было подключать локальные
@@ -186,8 +196,6 @@ UniChat/
 
 ## Ограничения
 
-- Нет иконки приложения и launch-ассетов — добавьте `Assets.xcassets`
-  перед публикацией в App Store.
 - Нет синхронизации между устройствами.
 - Один системный промпт на провайдера; отдельного промпта на чат нет.
 - Reasoning-контент DeepSeek показывается блоком «Размышления» в режиме

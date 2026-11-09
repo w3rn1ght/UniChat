@@ -194,13 +194,17 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
             guard let self = self, self.isPreparing else { return }
             guard let view = self.webView else { return }
 
+            let host = (view.url?.host ?? "").lowercased()
+            guard host == "gemini.google.com" || host.hasSuffix(".gemini.google.com") else {
+                self.pollReadiness(after: 1.0)
+                return
+            }
+
             let script = """
             (function() {
               try {
                 var w = window.WIZ_global_data;
                 if (w && w.SNlM0e && String(w.SNlM0e).length > 10) { return 'ready'; }
-                var html = document.documentElement ? document.documentElement.innerHTML : '';
-                if (/"SNlM0e":"[^"]{10,}"/.test(html)) { return 'ready'; }
                 return 'wait';
               } catch (e) { return 'wait'; }
             })()

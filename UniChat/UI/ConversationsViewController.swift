@@ -4,31 +4,37 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
 
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let emptyLabel = UILabel()
+    private let emptyBadge = CircleBadgeView()
+    private let fab = UIButton(type: .custom)
     private let cellIdentifier = "ConversationCell"
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "Чаты"
-        view.backgroundColor = Theme.background
+        navigationItem.largeTitleDisplayMode = .always
+        view.backgroundColor = Theme.surface
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Настройки",
                                                            style: .plain,
                                                            target: self,
                                                            action: #selector(openSettings))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add,
-                                                            target: self,
-                                                            action: #selector(createChat))
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.backgroundColor = Theme.background
-        tableView.separatorColor = Theme.separator
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        tableView.backgroundColor = Theme.surface
+        tableView.separatorStyle = .none
         tableView.tableFooterView = UIView()
-        tableView.rowHeight = 72
+        tableView.rowHeight = 86
+        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 96, right: 0)
         view.addSubview(tableView)
+
+        emptyBadge.configure(text: "✦",
+                             background: Theme.primaryContainer,
+                             foreground: Theme.onPrimaryContainer,
+                             fontSize: 30)
+        view.addSubview(emptyBadge)
 
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyLabel.text = "Пока нет чатов\nНажмите +, чтобы начать"
@@ -38,16 +44,39 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
         emptyLabel.textColor = Theme.secondaryText
         view.addSubview(emptyLabel)
 
+        fab.translatesAutoresizingMaskIntoConstraints = false
+        fab.setTitle("+", for: .normal)
+        fab.setTitleColor(Theme.onPrimaryContainer, for: .normal)
+        fab.titleLabel?.font = UIFont.systemFont(ofSize: 30, weight: .medium)
+        fab.backgroundColor = Theme.primaryContainer
+        fab.layer.cornerRadius = 28
+        if #available(iOS 13.0, *) {
+            fab.layer.cornerCurve = .continuous
+        }
+        Theme.applyShadow(fab, opacity: 0.16, radius: 12, offset: CGSize(width: 0, height: 6))
+        fab.addTarget(self, action: #selector(createChat), for: .touchUpInside)
+        view.addSubview(fab)
+
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
+            emptyBadge.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyBadge.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -70),
+            emptyBadge.widthAnchor.constraint(equalToConstant: 72),
+            emptyBadge.heightAnchor.constraint(equalToConstant: 72),
+
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -30),
+            emptyLabel.topAnchor.constraint(equalTo: emptyBadge.bottomAnchor, constant: 18),
             emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24)
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            fab.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -22),
+            fab.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -22),
+            fab.widthAnchor.constraint(equalToConstant: 56),
+            fab.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
 
@@ -60,6 +89,7 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
     private func updateEmptyState() {
         let isEmpty = ConversationStore.shared.conversations.isEmpty
         emptyLabel.isHidden = !isEmpty
+        emptyBadge.isHidden = !isEmpty
         tableView.isHidden = isEmpty
     }
 
@@ -103,23 +133,24 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier)
-            ?? UITableViewCell(style: .subtitle, reuseIdentifier: cellIdentifier)
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) as? MaterialRowCell
+            ?? MaterialRowCell(style: .default, reuseIdentifier: cellIdentifier)
 
         let conversation = ConversationStore.shared.conversations[indexPath.row]
-        cell.textLabel?.text = conversation.title
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        cell.textLabel?.textColor = Theme.primaryText
-
-        let providerName = AppSettings.shared.provider(id: conversation.providerID)?.name ?? "нет провайдера"
+        let provider = AppSettings.shared.provider(id: conversation.providerID)
+        let providerName = provider?.name ?? "нет провайдера"
         let model = conversation.model ?? "—"
-        cell.detailTextLabel?.text = "\(providerName) · \(model) · \(Theme.dateString(conversation.updatedAt))"
-        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-        cell.detailTextLabel?.textColor = Theme.secondaryText
-        cell.detailTextLabel?.lineBreakMode = .byTruncatingTail
+        let letter = providerName.trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix(1).uppercased()
+        let badgeText: String = letter.isEmpty ? "✦" : letter
 
-        cell.accessoryType = .disclosureIndicator
-        cell.backgroundColor = Theme.card
+        cell.configure(badgeText: badgeText,
+                       badgeBackground: Theme.toneColor(for: indexPath.row),
+                       badgeForeground: Theme.primaryText,
+                       title: conversation.title,
+                       subtitle: "\(providerName) · \(model)",
+                       accessory: Theme.dateString(conversation.updatedAt),
+                       showsChevron: true)
         return cell
     }
 

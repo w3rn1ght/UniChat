@@ -27,7 +27,10 @@ final class MessageCell: UITableViewCell {
         selectionStyle = .none
 
         bubbleView.translatesAutoresizingMaskIntoConstraints = false
-        bubbleView.layer.cornerRadius = 16
+        bubbleView.layer.cornerRadius = Theme.cornerLarge
+        if #available(iOS 13.0, *) {
+            bubbleView.layer.cornerCurve = .continuous
+        }
         bubbleView.layer.masksToBounds = true
         contentView.addSubview(bubbleView)
 
@@ -36,8 +39,9 @@ final class MessageCell: UITableViewCell {
         stackView.spacing = 3
         bubbleView.addSubview(stackView)
 
-        headerLabel.font = UIFont.systemFont(ofSize: 11, weight: .medium)
+        headerLabel.font = UIFont.systemFont(ofSize: 10.5, weight: .semibold)
         headerLabel.textColor = Theme.secondaryText
+        headerLabel.alpha = 0.9
         headerLabel.numberOfLines = 1
         headerLabel.lineBreakMode = .byTruncatingTail
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -51,18 +55,18 @@ final class MessageCell: UITableViewCell {
         stackView.addArrangedSubview(headerLabel)
         stackView.addArrangedSubview(messageLabel)
 
-        leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12)
-        trailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12)
+        leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 14)
+        trailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -14)
 
         NSLayoutConstraint.activate([
-            bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
-            bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
-            bubbleView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.86),
+            bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
+            bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -5),
+            bubbleView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.88),
 
-            stackView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 10),
-            stackView.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 13),
-            stackView.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -13),
-            stackView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -10)
+            stackView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 11),
+            stackView.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 15),
+            stackView.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -15),
+            stackView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -11)
         ])
     }
 
@@ -75,16 +79,20 @@ final class MessageCell: UITableViewCell {
         if isUser {
             bubbleView.backgroundColor = Theme.outgoingBubble
         } else if message.isError {
-            bubbleView.backgroundColor = UIColor(red: 1.0, green: 0.95, blue: 0.95, alpha: 1.0)
+            bubbleView.backgroundColor = Theme.dangerContainer
         } else {
             bubbleView.backgroundColor = Theme.incomingBubble
         }
 
+        bubbleView.layer.borderWidth = 0
         if isUser {
-            bubbleView.layer.borderWidth = 0
+            bubbleView.layer.maskedCorners = [.layerMinXMinYCorner,
+                                             .layerMaxXMinYCorner,
+                                             .layerMinXMaxYCorner]
         } else {
-            bubbleView.layer.borderWidth = 1
-            bubbleView.layer.borderColor = (message.isError ? Theme.danger.withAlphaComponent(0.3) : Theme.separator).cgColor
+            bubbleView.layer.maskedCorners = [.layerMinXMinYCorner,
+                                             .layerMaxXMinYCorner,
+                                             .layerMaxXMaxYCorner]
         }
 
         if isUser {

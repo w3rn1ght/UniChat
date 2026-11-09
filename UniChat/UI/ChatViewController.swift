@@ -8,6 +8,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
     private let contextBar = UIView()
     private let contextButton = UIButton(type: .system)
     private let emptyLabel = UILabel()
+    private let emptyBadge = CircleBadgeView()
 
     private var composerBottomConstraint: NSLayoutConstraint!
     private var activeSession: CancellableTask?
@@ -34,8 +35,9 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = Theme.background
+        view.backgroundColor = Theme.surface
         title = conversation.title
+        navigationItem.largeTitleDisplayMode = .never
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "•••",
                                                             style: .plain,
@@ -87,21 +89,16 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
     private func setupContextBar() {
         contextBar.translatesAutoresizingMaskIntoConstraints = false
-        contextBar.backgroundColor = Theme.card
+        contextBar.backgroundColor = Theme.surface
         view.addSubview(contextBar)
 
-        let hairline = UIView()
-        hairline.translatesAutoresizingMaskIntoConstraints = false
-        hairline.backgroundColor = Theme.separator
-        contextBar.addSubview(hairline)
-
         contextButton.translatesAutoresizingMaskIntoConstraints = false
-        contextButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        contextButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
         contextButton.titleLabel?.lineBreakMode = .byTruncatingMiddle
-        contextButton.setTitleColor(Theme.accent, for: .normal)
-        contextButton.backgroundColor = Theme.accentSoft
-        contextButton.layer.cornerRadius = 14
-        contextButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
+        contextButton.setTitleColor(Theme.onPrimaryContainer, for: .normal)
+        contextButton.backgroundColor = Theme.primaryContainer
+        contextButton.layer.cornerRadius = 17
+        contextButton.contentEdgeInsets = UIEdgeInsets(top: 7, left: 14, bottom: 7, right: 14)
         contextButton.addTarget(self, action: #selector(showProviderMenu), for: .touchUpInside)
         contextBar.addSubview(contextButton)
 
@@ -109,12 +106,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
             contextBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             contextBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             contextBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            contextBar.heightAnchor.constraint(equalToConstant: 42),
-
-            hairline.leadingAnchor.constraint(equalTo: contextBar.leadingAnchor),
-            hairline.trailingAnchor.constraint(equalTo: contextBar.trailingAnchor),
-            hairline.bottomAnchor.constraint(equalTo: contextBar.bottomAnchor),
-            hairline.heightAnchor.constraint(equalToConstant: 1.0 / UIScreen.main.scale),
+            contextBar.heightAnchor.constraint(equalToConstant: 48),
 
             contextButton.centerYAnchor.constraint(equalTo: contextBar.centerYAnchor),
             contextButton.centerXAnchor.constraint(equalTo: contextBar.centerXAnchor),
@@ -128,7 +120,7 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(MessageCell.self, forCellReuseIdentifier: MessageCell.reuseIdentifier)
-        tableView.backgroundColor = Theme.background
+        tableView.backgroundColor = Theme.surface
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 90
@@ -157,24 +149,37 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
     }
 
     private func setupEmptyLabel() {
+        emptyBadge.configure(text: "✦",
+                             background: Theme.primaryContainer,
+                             foreground: Theme.onPrimaryContainer,
+                             fontSize: 30)
+        view.addSubview(emptyBadge)
+
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyLabel.text = "Начните диалог.\nВыберите провайдера и модель сверху."
+        emptyLabel.text = "Спросите что угодно\nПровайдер и модель — на панели сверху."
         emptyLabel.numberOfLines = 0
         emptyLabel.textAlignment = .center
-        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.font = UIFont.systemFont(ofSize: 15)
         emptyLabel.textColor = Theme.secondaryText
         view.addSubview(emptyLabel)
 
         NSLayoutConstraint.activate([
+            emptyBadge.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
+            emptyBadge.centerYAnchor.constraint(equalTo: tableView.centerYAnchor, constant: -52),
+            emptyBadge.widthAnchor.constraint(equalToConstant: 72),
+            emptyBadge.heightAnchor.constraint(equalToConstant: 72),
+
             emptyLabel.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor),
+            emptyLabel.topAnchor.constraint(equalTo: emptyBadge.bottomAnchor, constant: 18),
             emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 30),
             emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -30)
         ])
     }
 
     private func updateEmptyState() {
-        emptyLabel.isHidden = !conversation.messages.isEmpty
+        let isEmpty = conversation.messages.isEmpty
+        emptyLabel.isHidden = !isEmpty
+        emptyBadge.isHidden = !isEmpty
     }
 
     private var currentProvider: ProviderConfig? {
@@ -513,28 +518,14 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
 
     private func showModelMenu() {
         guard let provider = currentProvider else { return }
+        view.endEditing(true)
 
-        var models = provider.modelPresets
-        let currentModel = conversation.model ?? provider.model
-        if !models.contains(currentModel) {
-            models.insert(currentModel, at: 0)
+        let selected = conversation.model ?? provider.model
+        let picker = ModelPickerViewController(provider: provider,
+                                               selectedModel: selected) { [weak self] model in
+            self?.setModel(model, provider: provider)
         }
-
-        let alert = UIAlertController(title: "Модель", message: provider.name, preferredStyle: .actionSheet)
-        for model in models {
-            let mark = model == currentModel ? "✓ " : ""
-            alert.addAction(UIAlertAction(title: mark + model, style: .default) { _ in
-                self.setModel(model, provider: provider)
-            })
-        }
-        alert.addAction(UIAlertAction(title: "Своя модель…", style: .default) { _ in
-            self.promptCustomModel(provider: provider)
-        })
-        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-
-        alert.popoverPresentationController?.sourceView = contextButton
-        alert.popoverPresentationController?.sourceRect = contextButton.bounds
-        present(alert, animated: true, completion: nil)
+        navigationController?.pushViewController(picker, animated: true)
     }
 
     private func setModel(_ model: String, provider: ProviderConfig) {
@@ -543,23 +534,6 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         conversation.updatedAt = Date()
         ConversationStore.shared.update(conversation)
         updateContextBar()
-    }
-
-    private func promptCustomModel(provider: ProviderConfig) {
-        let alert = UIAlertController(title: "Название модели", message: "Например: gemini-2.5-flash", preferredStyle: .alert)
-        alert.addTextField { field in
-            field.text = self.conversation.model ?? provider.model
-            field.autocapitalizationType = .none
-            field.autocorrectionType = .no
-        }
-        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-        alert.addAction(UIAlertAction(title: "Сохранить", style: .default) { _ in
-            let value = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !value.isEmpty {
-                self.setModel(value, provider: provider)
-            }
-        })
-        present(alert, animated: true, completion: nil)
     }
 
     // MARK: - Сообщения
