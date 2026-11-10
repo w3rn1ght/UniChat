@@ -137,6 +137,10 @@ final class OpenAICompatibleProvider: ChatProvider {
 
         if balancesEnabled {
             BalanceStore.shared.observe(providerID: config.id, session: session)
+            let providerConfig = config
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                AnyModelCatalog.refresh(for: providerConfig)
+            }
         }
 
         session.start(request: request, onEvent: { payload in

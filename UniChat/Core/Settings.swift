@@ -214,13 +214,13 @@ final class AppSettings {
             name: "AnyModel",
             kind: .openAICompatible,
             baseURL: "https://anymodel.org/v1",
-            model: "deepseek-chat",
+            model: "ds/deepseek-v4-flash",
             modelPresets: [
-                "deepseek-chat",
-                "deepseek-reasoner",
-                "gemini-2.5-flash",
-                "gpt-5",
-                "claude-sonnet-4"
+                "ds/deepseek-v4-flash",
+                "am/free",
+                "ag/gemini-2.5-flash",
+                "cx/gpt-5.6-luna",
+                "cc/claude-sonnet-4-5-20250929"
             ]
         ))
         persist()
@@ -390,13 +390,13 @@ final class AppSettings {
                 name: "AnyModel",
                 kind: .openAICompatible,
                 baseURL: "https://anymodel.org/v1",
-                model: "deepseek-chat",
+                model: "ds/deepseek-v4-flash",
                 modelPresets: [
-                    "deepseek-chat",
-                    "deepseek-reasoner",
-                    "gemini-2.5-flash",
-                    "gpt-5",
-                    "claude-sonnet-4"
+                    "ds/deepseek-v4-flash",
+                    "am/free",
+                    "ag/gemini-2.5-flash",
+                    "cx/gpt-5.6-luna",
+                    "cc/claude-sonnet-4-5-20250929"
                 ]
             ),
             ProviderConfig(

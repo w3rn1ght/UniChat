@@ -94,6 +94,9 @@ final class ChatModelPickerViewController: UIViewController, UITableViewDataSour
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         providers = AppSettings.shared.providers
+        for provider in providers where AnyModelCatalog.isAnyModel(provider) {
+            AnyModelCatalog.refresh(for: provider)
+        }
         rebuildSections()
         tableView.reloadData()
         loadAll()
