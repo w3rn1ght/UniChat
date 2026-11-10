@@ -678,6 +678,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
                 self.draft.model = models[0]
                 self.modelField?.text = self.draft.model
                 AppSettings.shared.addRecentModel(self.draft.model, providerID: self.draft.id)
+                AnyModelCatalog.refresh(for: self.draft)
                 self.persistAndClose(silent: false)
             case .failure(let error):
                 if self.view.window != nil {
@@ -723,6 +724,7 @@ final class ProviderEditorViewController: UIViewController, UITableViewDataSourc
             }
             self.modelField?.text = self.draft.model
             AppSettings.shared.upsert(self.draft)
+            AnyModelCatalog.refresh(for: self.draft)
             self.tableView.reloadData()
         }
     }

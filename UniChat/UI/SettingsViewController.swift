@@ -36,6 +36,10 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
                                                selector: #selector(settingsChanged),
                                                name: AppSettings.didChangeNotification,
                                                object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(settingsChanged),
+                                               name: BalanceStore.didChangeNotification,
+                                               object: nil)
     }
 
     deinit {
@@ -80,7 +84,7 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
         case 1:
             return "Тёмная тема применяется сразу ко всему интерфейсу."
         default:
-            return "UniChat 1.3.0 · iOS 12+ · Material You · без аналитики и собственного сервера."
+            return "UniChat 1.4.0 · iOS 12+ · Material You · без аналитики и собственного сервера."
         }
     }
 
@@ -152,6 +156,24 @@ final class SettingsViewController: UIViewController, UITableViewDataSource, UIT
                         accessory = "Нет ключа"
                     } else {
                         accessory = "Готов"
+                    }
+                }
+
+                if AnyModelCatalog.isAnyModel(provider) && provider.hasAPIKey {
+                    if let snapshot = BalanceStore.shared.snapshot(for: provider.id) {
+                        var parts: [String] = []
+                        if let usd = snapshot.remainingUSD {
+                            parts.append("≈" + BalanceFormat.usd(usd))
+                        }
+                        if let tokens = snapshot.remainingTokens {
+                            parts.append(BalanceFormat.tokens(tokens) + " токенов")
+                        }
+                        if !parts.isEmpty {
+                            subtitle = "Баланс: " + parts.joined(separator: " · ")
+                        }
+                    }
+                    if let price = BalanceStore.shared.price(for: provider.id, model: provider.model) {
+                        accessory = BalanceFormat.price(price)
                     }
                 }
 

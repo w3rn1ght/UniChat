@@ -1,8 +1,13 @@
 import UIKit
+import QuickLook
 
 final class MessageCell: UITableViewCell {
 
     static let reuseIdentifier = "MessageCell"
+
+    var onAttachmentTap: ((ChatAttachment) -> Void)?
+
+    private var displayedAttachments: [ChatAttachment] = []
 
     private let bubbleView = UIView()
     private let stackView = UIStackView()
@@ -136,19 +141,24 @@ final class MessageCell: UITableViewCell {
     }
 
     private func configureAttachments(_ attachments: [ChatAttachment], isUser: Bool) {
+        displayedAttachments = attachments
         for view in attachmentsStack.arrangedSubviews {
             attachmentsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
         }
         attachmentsStack.isHidden = attachments.isEmpty
 
-        for attachment in attachments {
+        for (index, attachment) in attachments.enumerated() {
             if attachment.isImage, let image = UIImage(data: attachment.data) {
                 let imageView = UIImageView(image: image)
                 imageView.translatesAutoresizingMaskIntoConstraints = false
                 imageView.contentMode = .scaleAspectFill
                 imageView.clipsToBounds = true
                 imageView.layer.cornerRadius = 10
+                imageView.isUserInteractionEnabled = true
+                imageView.tag = index
+                imageView.addGestureRecognizer(UITapGestureRecognizer(target: self,
+                                                                      action: #selector(attachmentTapped(_:))))
                 imageView.heightAnchor.constraint(equalToConstant: 150).isActive = true
                 imageView.widthAnchor.constraint(equalToConstant: 220).isActive = true
                 attachmentsStack.addArrangedSubview(imageView)
@@ -159,6 +169,10 @@ final class MessageCell: UITableViewCell {
                     ? UIColor(white: 1.0, alpha: 0.16)
                     : Theme.surfaceContainer
                 container.layer.cornerRadius = 10
+                container.isUserInteractionEnabled = true
+                container.tag = index
+                container.addGestureRecognizer(UITapGestureRecognizer(target: self,
+                                                                      action: #selector(attachmentTapped(_:))))
 
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
@@ -189,8 +203,15 @@ final class MessageCell: UITableViewCell {
         headerLabel.textColor = isError ? Theme.danger : Theme.secondaryText
     }
 
+    @objc private func attachmentTapped(_ gesture: UITapGestureRecognizer) {
+        guard let index = gesture.view?.tag,
+              displayedAttachments.indices.contains(index) else { return }
+        onAttachmentTap?(displayedAttachments[index])
+    }
+
     override func prepareForReuse() {
         super.prepareForReuse()
+        displayedAttachments = []
         headerLabel.isHidden = false
         headerLabel.text = nil
         messageLabel.attributedText = nil
@@ -200,5 +221,46 @@ final class MessageCell: UITableViewCell {
             view.removeFromSuperview()
         }
         attachmentsStack.isHidden = true
+    }
+}
+
+/// Просмотр изображения, PDF, текста и других файлов через QuickLook.
+final class AttachmentPreviewController: QLPreviewController, QLPreviewControllerDataSource {
+
+    private let fileURL: URL
+
+    init(attachment: ChatAttachment) {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("UniChatPreview", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory,
+                                                 withIntermediateDirectories: true,
+                                                 attributes: nil)
+        let originalName = attachment.name.isEmpty ? "file" : attachment.name
+        let ext = (originalName as NSString).pathExtension
+        let fileName = UUID().uuidString + (ext.isEmpty ? "" : "." + ext.lowercased())
+        let url = directory.appendingPathComponent(fileName)
+        try? attachment.data.write(to: url, options: .atomic)
+        self.fileURL = url
+
+        super.init(nibName: nil, bundle: nil)
+        dataSource = self
+        title = attachment.name
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        return 1
+    }
+
+    func previewController(_ controller: QLPreviewController,
+                           previewItemAt index: Int) -> QLPreviewItem {
+        return fileURL as NSURL
     }
 }

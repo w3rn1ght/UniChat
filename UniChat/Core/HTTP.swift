@@ -73,6 +73,8 @@ final class StreamingSession: NSObject, URLSessionDataDelegate, CancellableTask 
 
     private var onEvent: ((String) -> Void)?
     private var onFinish: ((Error?) -> Void)?
+    /// Заголовки ответа — используются для баланса/квоты AnyModel.
+    var onResponseHeaders: ((HTTPURLResponse) -> Void)?
 
     private var buffer = Data()
     private var rawBody = Data()
@@ -148,6 +150,7 @@ final class StreamingSession: NSObject, URLSessionDataDelegate, CancellableTask 
                 }
             }
             isSSE = contentType.contains("text/event-stream")
+            onResponseHeaders?(http)
         }
         completionHandler(.allow)
     }

@@ -417,8 +417,14 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
             }
             if token.receivedText {
                 token.finish(nil)
+            } else if !token.retried {
+                // Иногда Google отвечает 200 без текста (устаревший model-header
+                // или временный сбой). Один раз пробуем без выбора модели.
+                token.retried = true
+                token.model = .auto
+                startGeneration(token: token)
             } else {
-                token.finish(ChatError(message: "Gemini вернул пустой ответ."))
+                token.finish(ChatError(message: "Gemini не вернул текст. Попробуйте ещё раз."))
             }
 
         case "error":
@@ -535,14 +541,21 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
       }
 
       function wizData() {
-        if (window.WIZ_global_data) { return window.WIZ_global_data; }
-        var result = {};
+        var result = window.WIZ_global_data || {};
         try {
           var html = document.documentElement ? document.documentElement.innerHTML : '';
-          var at = html.match(/"SNlM0e"\s*:\s*"([^"]*)"/);
-          if (at) { result.SNlM0e = at[1]; }
-          var sid = html.match(/"FdrFJe"\s*:\s*"([^"]*)"/);
-          if (sid) { result.FdrFJe = sid[1]; }
+          if (!result.SNlM0e) {
+            var at = html.match(/"SNlM0e"\s*:\s*"([^"]*)"/);
+            if (at) { result.SNlM0e = at[1]; }
+          }
+          if (!result.FdrFJe) {
+            var sid = html.match(/"FdrFJe"\s*:\s*"([^"]*)"/);
+            if (sid) { result.FdrFJe = sid[1]; }
+          }
+          if (!result.cfb2h) {
+            var bl = html.match(/"cfb2h"\s*:\s*"([^"]*)"/);
+            if (bl) { result.cfb2h = bl[1]; }
+          }
         } catch (e) {}
         return result;
       }
@@ -611,6 +624,25 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
               text = candidate[1][0];
             }
           } catch (e) {}
+          if (!text) {
+            try {
+              if (candidate[22] && typeof candidate[22][0] === 'string') {
+                text = candidate[22][0];
+              }
+            } catch (e) {}
+          }
+          if (!text) {
+            try {
+              if (Array.isArray(candidate[1])) {
+                for (var t = 0; t < candidate[1].length; t++) {
+                  if (typeof candidate[1][t] === 'string' && candidate[1][t]) {
+                    text = candidate[1][t];
+                    break;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
 
           text = text.replace(/https?:\/\/googleusercontent\.com\/(?:\w+\/)+\d+\n*/g, '');
 
@@ -690,6 +722,7 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
           var data = wizData();
           var at = data && data.SNlM0e ? String(data.SNlM0e) : '';
           var sessionID = data && data.FdrFJe ? String(data.FdrFJe) : '';
+          var buildLabel = data && data.cfb2h ? String(data.cfb2h) : '';
           if (!at) {
             finish(state, 'Сессия Gemini не найдена. Войдите в аккаунт снова.', 401);
             return;
@@ -731,7 +764,7 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
                                [4, 5, 6, 8], null, null, config.capacityTail || 1,
                                null, null, config.modelNumber];
             modelHeader.push(config.thinking ? 2 : 1);
-            modelHeader.push(sessionID);
+            modelHeader.push(newUUID());
             headers['x-goog-ext-525001261-jspb'] = JSON.stringify(modelHeader);
             headers['x-goog-ext-73010989-jspb'] = '[0]';
             headers['x-goog-ext-73010990-jspb'] = '[0,0,0]';
@@ -745,6 +778,9 @@ final class GeminiWebSession: NSObject, WKNavigationDelegate, WKUIDelegate, WKSc
             + '?hl=' + encodeURIComponent(config.language || 'ru')
             + '&_reqid=' + reqid
             + '&rt=c';
+          if (buildLabel) {
+            url += '&bl=' + encodeURIComponent(buildLabel);
+          }
           if (sessionID) {
             url += '&f.sid=' + encodeURIComponent(sessionID);
           }

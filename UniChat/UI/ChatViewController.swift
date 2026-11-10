@@ -56,6 +56,10 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
                                                selector: #selector(keyboardWillChange(_:)),
                                                name: UIResponder.keyboardWillChangeFrameNotification,
                                                object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(balanceChanged),
+                                               name: BalanceStore.didChangeNotification,
+                                               object: nil)
 
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         longPress.minimumPressDuration = 0.4
@@ -209,7 +213,13 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         let provider = currentProvider
         let model = conversation.model ?? provider?.model ?? "—"
         let name = provider?.name ?? "Провайдер"
-        contextButton.setTitle("\(name) · \(model)  ▾", for: .normal)
+        var title = "\(name) · \(model)"
+        if let provider = provider,
+           AnyModelCatalog.isAnyModel(provider),
+           let price = BalanceStore.shared.price(for: provider.id, model: model) {
+            title += " · " + BalanceFormat.price(price)
+        }
+        contextButton.setTitle(title + "  ▾", for: .normal)
     }
 
     // MARK: - UITableView
@@ -227,7 +237,15 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
         let model = message.modelName ?? conversation.model ?? provider?.model ?? ""
         let providerTitle = "\(provider?.name ?? "Ассистент") · \(model)"
         cell.configure(with: message, providerTitle: providerTitle, streaming: streaming)
+        cell.onAttachmentTap = { [weak self] attachment in
+            self?.presentAttachment(attachment)
+        }
         return cell
+    }
+
+    private func presentAttachment(_ attachment: ChatAttachment) {
+        let preview = AttachmentPreviewController(attachment: attachment)
+        present(preview, animated: true, completion: nil)
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
@@ -713,6 +731,10 @@ final class ChatViewController: UIViewController, UITableViewDataSource, UITable
     }
 
     // MARK: - Клавиатура
+
+    @objc private func balanceChanged() {
+        updateContextBar()
+    }
 
     @objc private func keyboardWillChange(_ notification: Notification) {
         guard let userInfo = notification.userInfo,

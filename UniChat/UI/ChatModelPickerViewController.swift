@@ -352,8 +352,13 @@ final class ChatModelPickerViewController: UIViewController, UITableViewDataSour
         let title = ChatModelPickerViewController.displayName(for: entry.model)
         let free = ChatModelPickerViewController.isFree(entry.model)
 
+        var providerText = entry.provider.name
+        if let price = BalanceStore.shared.price(for: entry.provider.id, model: entry.model) {
+            providerText += " · " + BalanceFormat.price(price)
+        }
+
         cell.configure(title: title,
-                       provider: entry.provider.name,
+                       provider: providerText,
                        isFree: free,
                        isSelected: isSelected)
         return cell
@@ -484,7 +489,7 @@ final class UnifiedModelCell: CardCell {
         providerLabel.numberOfLines = 1
         providerLabel.lineBreakMode = .byTruncatingTail
         providerLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-        providerLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 90).isActive = true
+        providerLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 128).isActive = true
 
         freeBadge.font = UIFont.systemFont(ofSize: 10, weight: .semibold)
         freeBadge.textColor = Theme.success

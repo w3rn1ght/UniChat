@@ -13,6 +13,10 @@ final class OpenAICompatibleProvider: ChatProvider {
         return URL(string: config.normalizedBaseURL + "/chat/completions")
     }
 
+    private var balancesEnabled: Bool {
+        return config.baseURL.lowercased().contains("anymodel.org")
+    }
+
     private var headers: [String: String] {
         var result: [String: String] = [
             "Content-Type": "application/json",
@@ -129,6 +133,10 @@ final class OpenAICompatibleProvider: ChatProvider {
             DispatchQueue.main.async {
                 onDelta(text)
             }
+        }
+
+        if balancesEnabled {
+            BalanceStore.shared.observe(providerID: config.id, session: session)
         }
 
         session.start(request: request, onEvent: { payload in

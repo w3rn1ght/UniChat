@@ -163,10 +163,20 @@ enum Markdown {
             let inner = NSRange(location: range.location + 1, length: range.length - 2)
             attributed.addAttributes([
                 .font: Theme.monoFont,
-                .backgroundColor: UIColor(white: 0.45, alpha: 0.13)
+                .backgroundColor: Theme.surfaceContainerHigh
             ], range: inner)
             attributed.deleteCharacters(in: NSRange(location: range.location + range.length - 1, length: 1))
             attributed.deleteCharacters(in: NSRange(location: range.location, length: 1))
+        }
+
+        // LaTeX-формулы: $$...$$ и $...$. Модели часто присылают их вместо
+        // обычного текста; убираем разделители и переводим частые команды
+        // в Unicode, чтобы формулы не выглядели как сырой код.
+        applyPattern("\\$\\$([^$\\n]+?)\\$\\$", to: attributed) { match, original in
+            replaceLaTeX(match.range, in: attributed, original: original, wrappers: 2)
+        }
+        applyPattern("(?<!\\$)\\$([^$\\n]+?)\\$(?!\\$)", to: attributed) { match, original in
+            replaceLaTeX(match.range, in: attributed, original: original, wrappers: 1)
         }
 
         // [текст](ссылка)
@@ -236,6 +246,121 @@ enum Markdown {
             attributed.deleteCharacters(in: NSRange(location: range.location + range.length - 1, length: 1))
             attributed.deleteCharacters(in: NSRange(location: range.location, length: 1))
         }
+
+        // ++подчёркнутый++ — одна черта (например, подлежащее).
+        applyPattern("\\+\\+([^+\\n]+?)\\+\\+", to: attributed) { match, _ in
+            let range = match.range
+            guard range.length > 4 else { return }
+            attributed.addAttribute(.underlineStyle,
+                                    value: NSUnderlineStyle.single.rawValue,
+                                    range: NSRange(location: range.location + 2, length: range.length - 4))
+            attributed.deleteCharacters(in: NSRange(location: range.location + range.length - 2, length: 2))
+            attributed.deleteCharacters(in: NSRange(location: range.location, length: 2))
+        }
+
+        // ==текст== — двойная черта (сказуемое и другие разборы).
+        applyPattern("==([^=\\n]+?)==", to: attributed) { match, _ in
+            let range = match.range
+            guard range.length > 4 else { return }
+            attributed.addAttribute(.underlineStyle,
+                                    value: NSUnderlineStyle.double.rawValue,
+                                    range: NSRange(location: range.location + 2, length: range.length - 4))
+            attributed.deleteCharacters(in: NSRange(location: range.location + range.length - 2, length: 2))
+            attributed.deleteCharacters(in: NSRange(location: range.location, length: 2))
+        }
+
+        // HTML-подчёркивание <u>...</u> — его иногда присылают модели.
+        applyPattern("<u>([^<\\n]+?)</u>", to: attributed) { match, _ in
+            let range = match.range
+            guard range.length > 7 else { return }
+            attributed.addAttribute(.underlineStyle,
+                                    value: NSUnderlineStyle.single.rawValue,
+                                    range: NSRange(location: range.location + 3, length: range.length - 7))
+            attributed.deleteCharacters(in: NSRange(location: range.location + range.length - 4, length: 4))
+            attributed.deleteCharacters(in: NSRange(location: range.location, length: 3))
+        }
+    }
+
+    /// Убирает $...$ / $$...$$ и переводит простые LaTeX-команды в Unicode.
+    private static func replaceLaTeX(_ range: NSRange,
+                                     in attributed: NSMutableAttributedString,
+                                     original: NSString,
+                                     wrappers: Int) {
+        let innerLength = range.length - wrappers * 2
+        guard innerLength > 0 else { return }
+        let inner = original.substring(with: NSRange(location: range.location + wrappers,
+                                                     length: innerLength))
+        if wrappers == 1 {
+            let mathCharacters = CharacterSet(charactersIn: "\\^_=+-*/×÷±≤≥≠≈∞√")
+            let looksLikeNumber = Double(inner.trimmingCharacters(in: .whitespacesAndNewlines)) != nil
+            if inner.rangeOfCharacter(from: mathCharacters) == nil && !looksLikeNumber {
+                return
+            }
+        }
+        let converted = latexToUnicode(inner)
+        attributed.replaceCharacters(in: range, with: converted)
+        let newRange = NSRange(location: range.location, length: (converted as NSString).length)
+        if newRange.length > 0 {
+            attributed.addAttribute(.font, value: Theme.monoFont, range: newRange)
+        }
+    }
+
+    private static func latexToUnicode(_ text: String) -> String {
+        var value = text
+        let replacements: [(String, String)] = [
+            ("\\\\frac", " "), ("\\\\cdot", "·"), ("\\\\times", "×"),
+            ("\\\\div", "÷"), ("\\\\pm", "±"), ("\\\\le", "≤"),
+            ("\\\\ge", "≥"), ("\\\\neq", "≠"), ("\\\\approx", "≈"),
+            ("\\\\infty", "∞"), ("\\\\sqrt", "√"), ("\\\\pi", "π"),
+            ("\\\\alpha", "α"), ("\\\\beta", "β"), ("\\\\gamma", "γ"),
+            ("\\\\Delta", "Δ"), ("\\\\sum", "Σ"), ("\\\\int", "∫"),
+            ("\\\\angle", "∠"), ("\\\\triangle", "△"), ("\\\\parallel", "∥"),
+            ("\\\\perp", "⊥"), ("\\\\degree", "°"), ("\\\\%", "%"),
+            ("\\\\left", ""), ("\\\\right", ""), ("\\\\,", " "),
+            ("\\\\;", " "), ("\\\\!", ""), ("\\\\ ", " ")
+        ]
+        for (from, to) in replacements {
+            value = value.replacingOccurrences(of: from, with: to)
+        }
+        value = value.replacingOccurrences(of: "\\{", with: "")
+            .replacingOccurrences(of: "\\}", with: "")
+            .replacingOccurrences(of: "{", with: "")
+            .replacingOccurrences(of: "}", with: "")
+        value = value.replacingOccurrences(of: "\\^", with: "^")
+            .replacingOccurrences(of: "\\_", with: "_")
+        // x^2 -> x², x_1 -> x₁ (только цифры и знаки).
+        value = replaceScript(value, marker: "^", superscript: true)
+        value = replaceScript(value, marker: "_", superscript: false)
+        return value.replacingOccurrences(of: "$", with: "")
+    }
+
+    private static func replaceScript(_ text: String, marker: Character, superscript: Bool) -> String {
+        let supers: [Character: Character] = [
+            "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
+            "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
+            "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", "n": "ⁿ"
+        ]
+        let subs: [Character: Character] = [
+            "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄",
+            "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉"
+        ]
+        let map = superscript ? supers : subs
+        var result = ""
+        var index = text.startIndex
+        while index < text.endIndex {
+            let character = text[index]
+            if character == marker {
+                let next = text.index(after: index)
+                if next < text.endIndex, let mapped = map[text[next]] {
+                    result.append(mapped)
+                    index = text.index(after: next)
+                    continue
+                }
+            }
+            result.append(character)
+            index = text.index(after: index)
+        }
+        return result
     }
 
     private static func applyPattern(_ pattern: String,

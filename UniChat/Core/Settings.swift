@@ -287,6 +287,7 @@ final class AppSettings {
         Keychain.delete(account: "provider." + id.uuidString)
         Keychain.delete(account: "account." + id.uuidString)
         pruneRecentModels(for: id)
+        BalanceStore.shared.remove(providerID: id)
         if lastProviderID == id {
             lastProviderID = providers.first?.id
         }

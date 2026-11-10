@@ -98,6 +98,9 @@ final class ConversationsViewController: UIViewController, UITableViewDataSource
         if !ConversationsViewController.didRefreshModels {
             ConversationsViewController.didRefreshModels = true
             ModelCatalog.refreshAll(AppSettings.shared.providers)
+            for provider in AppSettings.shared.providers {
+                AnyModelCatalog.refresh(for: provider)
+            }
         }
     }
 

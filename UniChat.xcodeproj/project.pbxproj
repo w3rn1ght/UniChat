@@ -12,6 +12,7 @@
 		A1B2C3D4E5F6000000000203 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000103 /* Store.swift */; };
 		A1B2C3D4E5F6000000000204 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000104 /* Keychain.swift */; };
 		A1B2C3D4E5F6000000000205 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000105 /* Settings.swift */; };
+		A1B2C3D4E5F6000000000222 /* BalanceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000122 /* BalanceStore.swift */; };
 		A1B2C3D4E5F6000000000206 /* HTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000106 /* HTTP.swift */; };
 		A1B2C3D4E5F6000000000207 /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000107 /* Markdown.swift */; };
 		A1B2C3D4E5F6000000000208 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000108 /* Theme.swift */; };
@@ -48,6 +49,7 @@
 		A1B2C3D4E5F6000000000103 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000104 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000105 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000122 /* BalanceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceStore.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000106 /* HTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTP.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000107 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000108 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				A1B2C3D4E5F6000000000108 /* Theme.swift */,
 				A1B2C3D4E5F6000000000116 /* WebSupport.swift */,
 				A1B2C3D4E5F600000000011D /* ModelCatalog.swift */,
+				A1B2C3D4E5F6000000000122 /* BalanceStore.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -254,6 +257,7 @@
 				A1B2C3D4E5F6000000000203 /* Store.swift in Sources */,
 				A1B2C3D4E5F6000000000204 /* Keychain.swift in Sources */,
 				A1B2C3D4E5F6000000000205 /* Settings.swift in Sources */,
+				A1B2C3D4E5F6000000000222 /* BalanceStore.swift in Sources */,
 				A1B2C3D4E5F6000000000206 /* HTTP.swift in Sources */,
 				A1B2C3D4E5F6000000000207 /* Markdown.swift in Sources */,
 				A1B2C3D4E5F6000000000208 /* Theme.swift in Sources */,
@@ -350,14 +354,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -370,14 +374,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = UniChat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unichat.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
